@@ -2,6 +2,8 @@ package com.revpayproject.revpay.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 
 @Entity
 @Table(name = "passwords")
@@ -10,6 +12,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+
 public class Password {
 
     @Id
@@ -29,6 +32,7 @@ public class Password {
     // Many passwords belong to one user
     @ManyToOne
     @JoinColumn(name = "user_id")
+    @JsonIgnore
     private User user;
 }
 

@@ -29,25 +29,29 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
+        // Skip authentication for login & register endpoints
         String path = request.getServletPath();
-
-        // ✅ VERY IMPORTANT — Skip auth endpoints
-        if (path.contains("/api/auth")) {
+        if (path.startsWith("/api/auth")) {
             filterChain.doFilter(request, response);
             return;
         }
 
+        // Get Authorization Header
         final String authHeader = request.getHeader("Authorization");
 
+        // If header missing or invalid → continue
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
+        // Extract Token
         String token = authHeader.substring(7);
 
+        // Extract Email from Token
         String email = jwtUtil.extractEmail(token);
 
+        // Validate and set authentication
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
@@ -69,6 +73,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
         }
 
+        // Continue Filter Chain
         filterChain.doFilter(request, response);
     }
 }
