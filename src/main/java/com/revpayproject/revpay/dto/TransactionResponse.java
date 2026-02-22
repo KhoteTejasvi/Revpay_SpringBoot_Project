@@ -15,6 +15,7 @@ public class TransactionResponse {
     private Long id;
     private BigDecimal amount;
     private String type;
+    private String status;
     private LocalDateTime createdAt;
 
     private String senderEmail;

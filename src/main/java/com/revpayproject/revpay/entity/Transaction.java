@@ -7,9 +7,9 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Getter
 @Setter
 @Entity
+@Getter
 public class Transaction {
 
     @Id
@@ -18,7 +18,9 @@ public class Transaction {
 
     private BigDecimal amount;
 
-    private String type; // TRANSFER
+    private String type;
+
+    private String status;   // 🔥 ADD THIS
 
     private LocalDateTime createdAt;
 

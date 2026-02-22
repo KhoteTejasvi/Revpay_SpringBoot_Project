@@ -66,7 +66,18 @@ public class WalletService {
         Wallet receiverWallet = walletRepository.findByUser(receiver)
                 .orElseThrow(() -> new RuntimeException("Receiver wallet not found"));
 
+        Transaction transaction = new Transaction();
+        transaction.setAmount(request.getAmount());
+        transaction.setType("TRANSFER");
+        transaction.setCreatedAt(LocalDateTime.now());
+        transaction.setSender(sender);
+        transaction.setReceiver(receiver);
+
         if (senderWallet.getBalance().compareTo(request.getAmount()) < 0) {
+
+            transaction.setStatus("FAILED");
+            transactionRepository.save(transaction);
+
             throw new RuntimeException("Insufficient Balance");
         }
 
@@ -76,13 +87,7 @@ public class WalletService {
         walletRepository.save(senderWallet);
         walletRepository.save(receiverWallet);
 
-        Transaction transaction = new Transaction();
-        transaction.setAmount(request.getAmount());
-        transaction.setType("TRANSFER");
-        transaction.setCreatedAt(LocalDateTime.now());
-        transaction.setSender(sender);
-        transaction.setReceiver(receiver);
-
+        transaction.setStatus("SUCCESS");
         transactionRepository.save(transaction);
 
         return "Transfer Successful";
@@ -101,6 +106,7 @@ public class WalletService {
                         tx.getId(),
                         tx.getAmount(),
                         tx.getType(),
+                        tx.getStatus(),
                         tx.getCreatedAt(),
                         tx.getSender().getEmail(),
                         tx.getReceiver().getEmail()
