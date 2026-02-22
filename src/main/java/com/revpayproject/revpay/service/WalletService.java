@@ -67,7 +67,7 @@ public class WalletService {
                 .orElseThrow(() -> new RuntimeException("Receiver wallet not found"));
 
         if (senderWallet.getBalance().compareTo(request.getAmount()) < 0) {
-            return "Insufficient Balance";
+            throw new RuntimeException("Insufficient Balance");
         }
 
         senderWallet.setBalance(senderWallet.getBalance().subtract(request.getAmount()));
