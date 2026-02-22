@@ -1,5 +1,6 @@
 package com.revpayproject.revpay.controller;
 
+import com.revpayproject.revpay.dto.RegisterRequest;
 import com.revpayproject.revpay.entity.User;
 import com.revpayproject.revpay.entity.Wallet;
 import com.revpayproject.revpay.repository.UserRepository;
@@ -23,16 +24,15 @@ public class AuthController {
     private final WalletRepository walletRepository;
 
     @PostMapping("/register")
-    public String register(@RequestBody User user) {
+    public String register(@RequestBody RegisterRequest request) {
 
-        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-            return "Email already exists!";
-        }
+        User user = User.builder()
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role("USER")
+                .build();
 
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setRole("USER");
-
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
 
         walletRepository.save(
                 Wallet.builder()
@@ -41,7 +41,7 @@ public class AuthController {
                         .build()
         );
 
-        return "User Registered Successfully!";
+        return "User Registered Successfully";
     }
 
     @PostMapping("/login")
