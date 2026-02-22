@@ -18,15 +18,13 @@ public class Transaction {
 
     private BigDecimal amount;
 
-    private String type; // SEND / RECEIVE / ADD
+    private String type; // TRANSFER
 
-    private LocalDateTime transactionDate;
+    private LocalDateTime createdAt;
 
     @ManyToOne
-    @JoinColumn(name = "sender_id")
     private User sender;
 
     @ManyToOne
-    @JoinColumn(name = "receiver_id")
     private User receiver;
 }

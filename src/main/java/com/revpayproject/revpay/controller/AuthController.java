@@ -1,5 +1,6 @@
 package com.revpayproject.revpay.controller;
 
+import com.revpayproject.revpay.dto.LoginRequest;
 import com.revpayproject.revpay.dto.RegisterRequest;
 import com.revpayproject.revpay.entity.User;
 import com.revpayproject.revpay.entity.Wallet;
@@ -12,45 +13,48 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 
-
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
     private final UserRepository userRepository;
+    private final WalletRepository walletRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    private final WalletRepository walletRepository;
 
     @PostMapping("/register")
     public String register(@RequestBody RegisterRequest request) {
 
-        User user = User.builder()
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .role("USER")
-                .build();
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            return "User already exists";
+        }
 
-        User savedUser = userRepository.save(user);
+        User user = new User();
+        user.setFullName(request.getFullName());
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole("USER");   // 🔥 ADD THIS LINE
 
-        walletRepository.save(
-                Wallet.builder()
-                        .balance(BigDecimal.ZERO)
-                        .user(savedUser)
-                        .build()
-        );
+        userRepository.save(user);
 
-        return "User Registered Successfully";
+        // Create wallet automatically
+        Wallet wallet = new Wallet();
+        wallet.setUser(user);
+        wallet.setBalance(BigDecimal.ZERO);
+
+        walletRepository.save(wallet);
+
+        return "User registered successfully";
     }
 
     @PostMapping("/login")
-    public String login(@RequestBody User loginRequest) {
+    public String login(@RequestBody LoginRequest request) {
 
-        User user = userRepository.findByEmail(loginRequest.getEmail())
+        User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("Invalid password");
         }
 
