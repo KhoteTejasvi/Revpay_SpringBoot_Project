@@ -28,6 +28,7 @@ public class WalletService {
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
     private final PaymentMethodRepository paymentMethodRepository;
+    private final NotificationService notificationService;
 
     public BigDecimal getBalance(String email) {
 
@@ -138,6 +139,12 @@ public class WalletService {
 
         wallet.setBalance(wallet.getBalance().add(amount));
 
+        notificationService.createNotification(
+                user,
+                "₹" + amount + " added to your wallet",
+                "TRANSACTION"
+        );
+
         Transaction transaction = new Transaction();
         transaction.setAmount(amount);
         transaction.setType("ADD_MONEY");
@@ -169,6 +176,12 @@ public class WalletService {
         }
 
         wallet.setBalance(wallet.getBalance().subtract(amount));
+
+        notificationService.createNotification(
+                user,
+                "₹" + amount + " withdrawn from wallet",
+                "TRANSACTION"
+        );
 
         Transaction transaction = new Transaction();
         transaction.setAmount(amount);

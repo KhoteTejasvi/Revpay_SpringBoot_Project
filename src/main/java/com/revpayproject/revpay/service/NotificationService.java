@@ -1,5 +1,6 @@
 package com.revpayproject.revpay.service;
 
+import com.revpayproject.revpay.dto.NotificationResponse;
 import com.revpayproject.revpay.entity.Notification;
 import com.revpayproject.revpay.entity.User;
 import com.revpayproject.revpay.repository.NotificationRepository;
@@ -26,8 +27,18 @@ public class NotificationService {
         notificationRepository.save(notification);
     }
 
-    public List<Notification> getUserNotifications(User user) {
-        return notificationRepository.findByUserOrderByCreatedAtDesc(user);
+    public List<NotificationResponse> getUserNotifications(User user) {
+
+        return notificationRepository.findByUserOrderByCreatedAtDesc(user)
+                .stream()
+                .map(n -> new NotificationResponse(
+                        n.getId(),
+                        n.getMessage(),
+                        n.getType(),
+                        n.isRead(),
+                        n.getCreatedAt()
+                ))
+                .toList();
     }
 
     public void markAsRead(Notification notification) {

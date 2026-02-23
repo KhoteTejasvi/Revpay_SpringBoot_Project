@@ -20,8 +20,8 @@ public class MoneyRequestService {
     private final WalletRepository walletRepository;
     private final MoneyRequestRepository moneyRequestRepository;
     private final TransactionRepository transactionRepository;
+    private final NotificationService notificationService;
 
-    // SEND REQUEST
     public String sendRequest(String senderEmail, SendRequestDto dto) {
 
         User sender = userRepository.findByEmail(senderEmail)
@@ -80,6 +80,20 @@ public class MoneyRequestService {
 
         // Update request status
         request.setStatus(RequestStatus.ACCEPTED);
+
+        // Notify sender
+        notificationService.createNotification(
+                request.getSender(),
+                "Your money request of ₹" + request.getAmount() + " was accepted",
+                "REQUEST"
+        );
+
+        // Notify receiver
+        notificationService.createNotification(
+                request.getReceiver(),
+                "You accepted a request of ₹" + request.getAmount(),
+                "REQUEST"
+        );
 
         // Create transaction record
         Transaction transaction = new Transaction();
