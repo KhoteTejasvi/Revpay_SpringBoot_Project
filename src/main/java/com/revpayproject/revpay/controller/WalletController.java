@@ -11,7 +11,8 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
-
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -88,6 +89,16 @@ public class WalletController {
                 startDate,
                 endDate,
                 pageable
+        );
+    }
+
+    @GetMapping("/transactions/export")
+    public void exportTransactions(HttpServletResponse response)
+            throws IOException {
+
+        walletService.exportTransactions(
+                getLoggedInEmail(),
+                response
         );
     }
 

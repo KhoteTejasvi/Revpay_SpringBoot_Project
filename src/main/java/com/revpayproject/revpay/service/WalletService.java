@@ -19,7 +19,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import com.revpayproject.revpay.specification.TransactionSpecification;
-
+import com.opencsv.CSVWriter;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -249,5 +252,45 @@ public class WalletService {
         spec = spec.and(userSpec);
 
         return transactionRepository.findAll(spec, pageable);
+    }
+
+    public void exportTransactions(String email, HttpServletResponse response)
+            throws IOException {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<Transaction> transactions =
+                transactionRepository.findBySenderOrReceiver(user, user);
+
+        response.setContentType("text/csv");
+        response.setHeader("Content-Disposition",
+                "attachment; filename=transactions.csv");
+
+        PrintWriter writer = response.getWriter();
+        CSVWriter csvWriter = new CSVWriter(writer);
+
+        // Header
+        String[] header = {
+                "ID", "Type", "Status", "Amount",
+                "Sender", "Receiver", "Created At"
+        };
+        csvWriter.writeNext(header);
+
+        // Data
+        for (Transaction tx : transactions) {
+            String[] data = {
+                    String.valueOf(tx.getId()),
+                    tx.getType(),
+                    tx.getStatus().name(),
+                    tx.getAmount().toString(),
+                    tx.getSender().getEmail(),
+                    tx.getReceiver().getEmail(),
+                    tx.getCreatedAt().toString()
+            };
+            csvWriter.writeNext(data);
+        }
+
+        csvWriter.close();
     }
 }
