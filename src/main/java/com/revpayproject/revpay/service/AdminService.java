@@ -7,6 +7,13 @@ import com.revpayproject.revpay.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import com.revpayproject.revpay.enums.TransactionStatus;
+import com.revpayproject.revpay.entity.Transaction;
+import com.revpayproject.revpay.specification.TransactionSpecification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+
+import java.time.LocalDateTime;
 
 
 @Service
@@ -31,5 +38,19 @@ public class AdminService {
                 successful,
                 failed
         );
+    }
+
+    public Page<Transaction> filterTransactions(
+            TransactionStatus status,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            Pageable pageable) {
+
+        Specification<Transaction> spec = Specification
+                .where(TransactionSpecification.hasStatus(status))
+                .and(TransactionSpecification.createdAfter(startDate))
+                .and(TransactionSpecification.createdBefore(endDate));
+
+        return transactionRepository.findAll(spec, pageable);
     }
 }

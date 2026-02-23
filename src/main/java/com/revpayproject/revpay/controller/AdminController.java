@@ -3,7 +3,9 @@ package com.revpayproject.revpay.controller;
 import com.revpayproject.revpay.dto.DashboardResponse;
 import com.revpayproject.revpay.dto.PagedResponse;
 import com.revpayproject.revpay.dto.UserResponse;
+import com.revpayproject.revpay.entity.Transaction;
 import com.revpayproject.revpay.entity.User;
+import com.revpayproject.revpay.enums.TransactionStatus;
 import com.revpayproject.revpay.repository.UserRepository;
 import com.revpayproject.revpay.service.AdminService;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +18,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
+import java.time.LocalDateTime;
+
 import java.util.List;
 
 
@@ -68,5 +73,20 @@ public class AdminController {
     @PreAuthorize("hasRole('ADMIN')")
     public DashboardResponse getDashboard() {
         return adminService.getDashboardStats();
+    }
+
+    @GetMapping("/transactions")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Page<Transaction> filterTransactions(
+            @RequestParam(required = false) TransactionStatus status,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            LocalDateTime startDate,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            LocalDateTime endDate,
+            Pageable pageable) {
+
+        return adminService.filterTransactions(status, startDate, endDate, pageable);
     }
 }
