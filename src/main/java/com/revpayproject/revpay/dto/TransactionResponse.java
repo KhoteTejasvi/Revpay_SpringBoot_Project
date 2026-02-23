@@ -6,6 +6,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import com.revpayproject.revpay.enums.TransactionStatus;
 
 @Getter
 @Setter
@@ -15,7 +16,7 @@ public class TransactionResponse {
     private Long id;
     private BigDecimal amount;
     private String type;
-    private String status;
+    private TransactionStatus status;
     private LocalDateTime createdAt;
 
     private String senderEmail;

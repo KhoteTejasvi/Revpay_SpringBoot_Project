@@ -3,6 +3,9 @@ package com.revpayproject.revpay.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import com.revpayproject.revpay.enums.Role;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 
 @Getter
 @Setter
@@ -21,5 +24,6 @@ public class User {
 
     private String password;
 
-    private String role; // USER (later ADMIN/BUSINESS)
+    @Enumerated(EnumType.STRING)
+    private Role role;
 }

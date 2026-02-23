@@ -10,6 +10,7 @@ import com.revpayproject.revpay.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import com.revpayproject.revpay.enums.Role;
 
 import java.math.BigDecimal;
 
@@ -34,7 +35,7 @@ public class AuthController {
         user.setFullName(request.getFullName());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole("USER");   // 🔥 ADD THIS LINE
+        user.setRole(Role.USER);
 
         userRepository.save(user);
 
@@ -58,6 +59,6 @@ public class AuthController {
             throw new RuntimeException("Invalid password");
         }
 
-        return jwtService.generateToken(user.getEmail());
+        return jwtService.generateToken(user);
     }
 }

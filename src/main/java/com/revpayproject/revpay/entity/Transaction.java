@@ -6,6 +6,9 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import com.revpayproject.revpay.enums.TransactionStatus;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 
 @Setter
 @Entity
@@ -20,7 +23,8 @@ public class Transaction {
 
     private String type;
 
-    private String status;   // 🔥 ADD THIS
+    @Enumerated(EnumType.STRING)
+    private TransactionStatus status;
 
     private LocalDateTime createdAt;
 

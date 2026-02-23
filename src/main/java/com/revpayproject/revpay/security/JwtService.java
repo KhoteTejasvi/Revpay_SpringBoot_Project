@@ -1,5 +1,6 @@
 package com.revpayproject.revpay.security;
 
+import com.revpayproject.revpay.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -12,20 +13,26 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    // 🔥 Generate secure key automatically (correct size)
+    // Use HS256 consistently
     private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
-    public String generateToken(String email) {
+    public String generateToken(User user) {
+
         return Jwts.builder()
-                .setSubject(email)
-                .setIssuedAt(new Date())
+                .claim("role", user.getRole().name())
+                .setSubject(user.getEmail())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
-                .signWith(key)
+                .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
     public String extractEmail(String token) {
         return extractAllClaims(token).getSubject();
+    }
+
+    public String extractRole(String token) {
+        return extractAllClaims(token).get("role", String.class);
     }
 
     public boolean isTokenValid(String token, String email) {

@@ -12,6 +12,7 @@ import com.revpayproject.revpay.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.revpayproject.revpay.enums.TransactionStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -75,8 +76,7 @@ public class WalletService {
 
         if (senderWallet.getBalance().compareTo(request.getAmount()) < 0) {
 
-            transaction.setStatus("FAILED");
-            transactionRepository.save(transaction);
+            transaction.setStatus(TransactionStatus.FAILED);            transactionRepository.save(transaction);
 
             throw new RuntimeException("Insufficient Balance");
         }
@@ -87,8 +87,7 @@ public class WalletService {
         walletRepository.save(senderWallet);
         walletRepository.save(receiverWallet);
 
-        transaction.setStatus("SUCCESS");
-        transactionRepository.save(transaction);
+        transaction.setStatus(TransactionStatus.SUCCESS);        transactionRepository.save(transaction);
 
         return "Transfer Successful";
     }
