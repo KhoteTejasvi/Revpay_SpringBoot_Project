@@ -73,6 +73,8 @@ public class MoneyRequestService {
                 receiverWallet.getBalance().subtract(request.getAmount())
         );
 
+        notificationService.checkLowBalance(request.getReceiver(), receiverWallet);
+
         // Add to sender
         senderWallet.setBalance(
                 senderWallet.getBalance().add(request.getAmount())

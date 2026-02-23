@@ -3,10 +3,12 @@ package com.revpayproject.revpay.service;
 import com.revpayproject.revpay.dto.NotificationResponse;
 import com.revpayproject.revpay.entity.Notification;
 import com.revpayproject.revpay.entity.User;
+import com.revpayproject.revpay.entity.Wallet;
 import com.revpayproject.revpay.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -52,5 +54,18 @@ public class NotificationService {
 
         notification.setRead(true);
         notificationRepository.save(notification);
+    }
+
+    public void checkLowBalance(User user, Wallet wallet) {
+
+        if (user.isLowBalanceNotifications()
+                && wallet.getBalance().compareTo(new BigDecimal("500")) < 0) {
+
+            createNotification(
+                    user,
+                    "⚠ Your wallet balance is low: ₹" + wallet.getBalance(),
+                    "ALERT"
+            );
+        }
     }
 }

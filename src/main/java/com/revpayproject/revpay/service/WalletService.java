@@ -29,6 +29,7 @@ public class WalletService {
     private final TransactionRepository transactionRepository;
     private final PaymentMethodRepository paymentMethodRepository;
     private final NotificationService notificationService;
+    private static final BigDecimal LOW_BALANCE_THRESHOLD = new BigDecimal("500");
 
     public BigDecimal getBalance(String email) {
 
@@ -86,12 +87,16 @@ public class WalletService {
         }
 
         senderWallet.setBalance(senderWallet.getBalance().subtract(request.getAmount()));
+
+        notificationService.checkLowBalance(sender, senderWallet);
+
         receiverWallet.setBalance(receiverWallet.getBalance().add(request.getAmount()));
 
         walletRepository.save(senderWallet);
         walletRepository.save(receiverWallet);
 
-        transaction.setStatus(TransactionStatus.SUCCESS);        transactionRepository.save(transaction);
+        transaction.setStatus(TransactionStatus.SUCCESS);
+        transactionRepository.save(transaction);
 
         return "Transfer Successful";
     }
@@ -176,7 +181,7 @@ public class WalletService {
         }
 
         wallet.setBalance(wallet.getBalance().subtract(amount));
-
+        checkLowBalance(user, wallet);
         notificationService.createNotification(
                 user,
                 "₹" + amount + " withdrawn from wallet",
@@ -194,5 +199,18 @@ public class WalletService {
         transactionRepository.save(transaction);
 
         return "Withdrawal Successful";
+    }
+
+    private void checkLowBalance(User user, Wallet wallet) {
+
+        if (user.isLowBalanceNotifications() &&
+                wallet.getBalance().compareTo(LOW_BALANCE_THRESHOLD) < 0) {
+
+            notificationService.createNotification(
+                    user,
+                    "⚠ Your wallet balance is low: ₹" + wallet.getBalance(),
+                    "ALERT"
+            );
+        }
     }
 }
