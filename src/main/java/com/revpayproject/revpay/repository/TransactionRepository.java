@@ -9,4 +9,5 @@ import java.util.List;
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
     List<Transaction> findBySenderOrReceiver(User sender, User receiver);
+    long countByStatus(String status);
 }
