@@ -1,6 +1,7 @@
 package com.revpayproject.revpay.service;
 
 import com.revpayproject.revpay.dto.AddCardDto;
+import com.revpayproject.revpay.dto.PaymentMethodResponse;
 import com.revpayproject.revpay.entity.PaymentMethod;
 import com.revpayproject.revpay.entity.User;
 import com.revpayproject.revpay.repository.PaymentMethodRepository;
@@ -54,12 +55,20 @@ public class PaymentMethodService {
         return "Card Added Securely";
     }
 
-    public List<PaymentMethod> getUserCards(String email) {
+    public List<PaymentMethodResponse> getUserCards(String email) {
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return paymentMethodRepository.findByUser(user);
+        return paymentMethodRepository.findByUser(user)
+                .stream()
+                .map(card -> new PaymentMethodResponse(
+                        card.getId(),
+                        card.getMaskedCardNumber(),
+                        card.getExpiry(),
+                        card.isDefault()
+                ))
+                .toList();
     }
 
     public String deleteCard(Long id, String email) {

@@ -1,6 +1,7 @@
 package com.revpayproject.revpay.controller;
 
 import com.revpayproject.revpay.dto.AddCardDto;
+import com.revpayproject.revpay.dto.PaymentMethodResponse;
 import com.revpayproject.revpay.entity.PaymentMethod;
 import com.revpayproject.revpay.service.PaymentMethodService;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,7 @@ public class PaymentMethodController {
     }
 
     @GetMapping("/my-cards")
-    public List<PaymentMethod> getCards() {
+    public List<PaymentMethodResponse> getCards() {
         return paymentMethodService.getUserCards(getLoggedInEmail());
     }
 
