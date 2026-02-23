@@ -1,9 +1,11 @@
 package com.revpayproject.revpay.controller;
 
+import com.revpayproject.revpay.dto.DashboardResponse;
 import com.revpayproject.revpay.dto.PagedResponse;
 import com.revpayproject.revpay.dto.UserResponse;
 import com.revpayproject.revpay.entity.User;
 import com.revpayproject.revpay.repository.UserRepository;
+import com.revpayproject.revpay.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,6 +27,7 @@ import java.util.List;
 public class AdminController {
 
     private final UserRepository userRepository;
+    private final AdminService adminService;
 
     @GetMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")
@@ -59,5 +62,11 @@ public class AdminController {
                 userPage.getTotalPages(),
                 userPage.getTotalElements()
         );
+    }
+
+    @GetMapping("/dashboard")
+    @PreAuthorize("hasRole('ADMIN')")
+    public DashboardResponse getDashboard() {
+        return adminService.getDashboardStats();
     }
 }

@@ -6,6 +6,8 @@ import com.revpayproject.revpay.repository.UserRepository;
 import com.revpayproject.revpay.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import com.revpayproject.revpay.enums.TransactionStatus;
+
 
 @Service
 @RequiredArgsConstructor
@@ -19,8 +21,8 @@ public class AdminService {
 
         long totalUsers = userRepository.count();
         long totalTransactions = transactionRepository.count();
-        long successful = transactionRepository.countByStatus("SUCCESS");
-        long failed = transactionRepository.countByStatus("FAILED");
+        long successful = transactionRepository.countByStatus(TransactionStatus.SUCCESS);
+        long failed = transactionRepository.countByStatus(TransactionStatus.FAILED);
 
         return new DashboardResponse(
                 totalUsers,
