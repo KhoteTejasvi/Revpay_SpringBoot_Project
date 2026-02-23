@@ -135,7 +135,6 @@ public class WalletService {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("No default card found"));
 
-        // Simulated card charge success
 
         wallet.setBalance(wallet.getBalance().add(amount));
 
@@ -150,5 +149,37 @@ public class WalletService {
         transactionRepository.save(transaction);
 
         return "Money Added Successfully via Card " + defaultCard.getMaskedCardNumber();
+    }
+
+    @Transactional
+    public String withdrawMoney(String email, BigDecimal amount) {
+
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Invalid amount");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Wallet wallet = walletRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("Wallet not found"));
+
+        if (wallet.getBalance().compareTo(amount) < 0) {
+            throw new RuntimeException("Insufficient Balance");
+        }
+
+        wallet.setBalance(wallet.getBalance().subtract(amount));
+
+        Transaction transaction = new Transaction();
+        transaction.setAmount(amount);
+        transaction.setType("WITHDRAW");
+        transaction.setStatus(TransactionStatus.SUCCESS);
+        transaction.setCreatedAt(LocalDateTime.now());
+        transaction.setSender(user);
+        transaction.setReceiver(user);
+
+        transactionRepository.save(transaction);
+
+        return "Withdrawal Successful";
     }
 }

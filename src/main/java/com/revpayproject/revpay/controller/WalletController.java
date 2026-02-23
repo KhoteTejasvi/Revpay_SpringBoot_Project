@@ -1,9 +1,6 @@
 package com.revpayproject.revpay.controller;
 
-import com.revpayproject.revpay.dto.AddMoneyFromCardDto;
-import com.revpayproject.revpay.dto.AddMoneyRequest;
-import com.revpayproject.revpay.dto.TransactionResponse;
-import com.revpayproject.revpay.dto.TransferRequest;
+import com.revpayproject.revpay.dto.*;
 import com.revpayproject.revpay.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -49,6 +46,14 @@ public class WalletController {
     @PostMapping("/add-from-card")
     public String addMoneyFromCard(@RequestBody AddMoneyFromCardDto dto) {
         return walletService.addMoneyFromCard(
+                getLoggedInEmail(),
+                dto.getAmount()
+        );
+    }
+
+    @PostMapping("/withdraw")
+    public String withdrawMoney(@RequestBody WithdrawRequestDto dto) {
+        return walletService.withdrawMoney(
                 getLoggedInEmail(),
                 dto.getAmount()
         );
