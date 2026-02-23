@@ -7,6 +7,7 @@ import com.revpayproject.revpay.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -30,12 +31,12 @@ public class WalletController {
     }
 
     @PostMapping("/add")
-    public String addMoney(@RequestBody AddMoneyRequest request) {
+    public String addMoney(@Valid @RequestBody AddMoneyRequest request) {
         return walletService.addMoney(getLoggedInEmail(), request);
     }
 
     @PostMapping("/transfer")
-    public String transferMoney(@RequestBody TransferRequest request) {
+    public String transferMoney(@Valid @RequestBody TransferRequest request) {
         return walletService.transferMoney(getLoggedInEmail(), request);
     }
 
