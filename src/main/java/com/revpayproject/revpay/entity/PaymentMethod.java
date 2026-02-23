@@ -14,9 +14,11 @@ public class PaymentMethod {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String cardNumber;
+    private String maskedCardNumber;
+    private String last4Digits;
+
     private String expiry;
-    private String cvv;
+    private String encryptedCvv;
     private String billingAddress;
 
     private boolean isDefault;
