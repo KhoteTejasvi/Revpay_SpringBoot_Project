@@ -34,6 +34,6 @@ public class PaymentMethodController {
 
     @DeleteMapping("/{id}")
     public String deleteCard(@PathVariable Long id) {
-        return paymentMethodService.deleteCard(id);
+        return paymentMethodService.deleteCard(id, getLoggedInEmail());
     }
 }

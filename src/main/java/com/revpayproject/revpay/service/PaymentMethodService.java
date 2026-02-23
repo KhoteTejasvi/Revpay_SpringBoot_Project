@@ -5,6 +5,7 @@ import com.revpayproject.revpay.entity.PaymentMethod;
 import com.revpayproject.revpay.entity.User;
 import com.revpayproject.revpay.repository.PaymentMethodRepository;
 import com.revpayproject.revpay.repository.UserRepository;
+import com.revpayproject.revpay.security.CardEncryptionUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,17 +23,35 @@ public class PaymentMethodService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        if (!isValidCardNumber(dto.getCardNumber())) {
+            throw new RuntimeException("Invalid Card Number");
+        }
+
+        String last4 = dto.getCardNumber()
+                .substring(dto.getCardNumber().length() - 4);
+
+        String masked = "**** **** **** " + last4;
+
         PaymentMethod card = new PaymentMethod();
-        card.setCardNumber(dto.getCardNumber());
+        card.setMaskedCardNumber(masked);
+        card.setLast4Digits(last4);
         card.setExpiry(dto.getExpiry());
-        card.setCvv(dto.getCvv());
+        card.setEncryptedCvv(
+                CardEncryptionUtil.encrypt(dto.getCvv())
+        );
         card.setBillingAddress(dto.getBillingAddress());
         card.setUser(user);
-        card.setDefault(false);
+
+        // If first card, make default
+        if (paymentMethodRepository.findByUser(user).isEmpty()) {
+            card.setDefault(true);
+        } else {
+            card.setDefault(false);
+        }
 
         paymentMethodRepository.save(card);
 
-        return "Card Added Successfully";
+        return "Card Added Securely";
     }
 
     public List<PaymentMethod> getUserCards(String email) {
@@ -43,8 +62,39 @@ public class PaymentMethodService {
         return paymentMethodRepository.findByUser(user);
     }
 
-    public String deleteCard(Long id) {
-        paymentMethodRepository.deleteById(id);
-        return "Card Deleted Successfully";
+    public String deleteCard(Long id, String email) {
+
+        PaymentMethod card = paymentMethodRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Card not found"));
+
+        if (!card.getUser().getEmail().equals(email)) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        paymentMethodRepository.delete(card);
+
+        return "Card Deleted";
+    }
+
+    private boolean isValidCardNumber(String cardNumber) {
+
+        int sum = 0;
+        boolean alternate = false;
+
+        for (int i = cardNumber.length() - 1; i >= 0; i--) {
+            int n = Integer.parseInt(cardNumber.substring(i, i + 1));
+
+            if (alternate) {
+                n *= 2;
+                if (n > 9) {
+                    n = (n % 10) + 1;
+                }
+            }
+
+            sum += n;
+            alternate = !alternate;
+        }
+
+        return (sum % 10 == 0);
     }
 }
