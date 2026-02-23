@@ -1,5 +1,6 @@
 package com.revpayproject.revpay.controller;
 
+import com.revpayproject.revpay.dto.CreateBusinessDto;
 import com.revpayproject.revpay.dto.NotificationPreferenceDto;
 import com.revpayproject.revpay.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,16 @@ public class UserController {
             @RequestBody NotificationPreferenceDto dto) {
 
         return userService.updateNotificationPreferences(
+                getLoggedInEmail(),
+                dto
+        );
+    }
+
+    @PostMapping("/upgrade-business")
+    public String upgradeToBusiness(
+            @RequestBody CreateBusinessDto dto) {
+
+        return userService.upgradeToBusiness(
                 getLoggedInEmail(),
                 dto
         );
