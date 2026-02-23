@@ -28,4 +28,16 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @Column(unique = true)
+    private String phoneNumber;
+
+    @Column(length = 100)
+    private String transactionPin;
+
+    private boolean emailNotifications = true;
+
+    private boolean transactionNotifications = true;
+
+    private boolean lowBalanceNotifications = true;
 }

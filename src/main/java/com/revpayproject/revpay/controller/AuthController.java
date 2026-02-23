@@ -35,12 +35,12 @@ public class AuthController {
         User user = new User();
         user.setFullName(request.getFullName());
         user.setEmail(request.getEmail());
+        user.setPhoneNumber(request.getPhoneNumber());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.USER);
 
         userRepository.save(user);
 
-        // Create wallet automatically
         Wallet wallet = new Wallet();
         wallet.setUser(user);
         wallet.setBalance(BigDecimal.ZERO);
