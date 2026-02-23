@@ -31,4 +31,12 @@ public class NotificationController {
     public List<NotificationResponse> getNotifications() {
         return notificationService.getUserNotifications(getUser());
     }
+
+    @PutMapping("/{id}/read")
+    public String markAsRead(@PathVariable Long id) {
+
+        notificationService.markAsRead(id, getUser());
+
+        return "Notification marked as read";
+    }
 }

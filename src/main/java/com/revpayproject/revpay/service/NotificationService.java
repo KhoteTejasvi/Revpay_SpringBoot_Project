@@ -41,7 +41,15 @@ public class NotificationService {
                 .toList();
     }
 
-    public void markAsRead(Notification notification) {
+    public void markAsRead(Long notificationId, User user) {
+
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new RuntimeException("Notification not found"));
+
+        if (!notification.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("Unauthorized");
+        }
+
         notification.setRead(true);
         notificationRepository.save(notification);
     }
