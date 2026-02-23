@@ -3,9 +3,11 @@ package com.revpayproject.revpay.service;
 import com.revpayproject.revpay.dto.AddMoneyRequest;
 import com.revpayproject.revpay.dto.TransactionResponse;
 import com.revpayproject.revpay.dto.TransferRequest;
+import com.revpayproject.revpay.entity.PaymentMethod;
 import com.revpayproject.revpay.entity.Transaction;
 import com.revpayproject.revpay.entity.User;
 import com.revpayproject.revpay.entity.Wallet;
+import com.revpayproject.revpay.repository.PaymentMethodRepository;
 import com.revpayproject.revpay.repository.TransactionRepository;
 import com.revpayproject.revpay.repository.UserRepository;
 import com.revpayproject.revpay.repository.WalletRepository;
@@ -25,6 +27,7 @@ public class WalletService {
     private final UserRepository userRepository;
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
+    private final PaymentMethodRepository paymentMethodRepository;
 
     public BigDecimal getBalance(String email) {
 
@@ -111,5 +114,41 @@ public class WalletService {
                         tx.getReceiver().getEmail()
                 ))
                 .toList();
+    }
+
+    @Transactional
+    public String addMoneyFromCard(String email, BigDecimal amount) {
+
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Invalid amount");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Wallet wallet = walletRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("Wallet not found"));
+
+        PaymentMethod defaultCard = paymentMethodRepository.findByUser(user)
+                .stream()
+                .filter(PaymentMethod::isDefault)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No default card found"));
+
+        // Simulated card charge success
+
+        wallet.setBalance(wallet.getBalance().add(amount));
+
+        Transaction transaction = new Transaction();
+        transaction.setAmount(amount);
+        transaction.setType("ADD_MONEY");
+        transaction.setStatus(TransactionStatus.SUCCESS);
+        transaction.setCreatedAt(LocalDateTime.now());
+        transaction.setSender(user);
+        transaction.setReceiver(user);
+
+        transactionRepository.save(transaction);
+
+        return "Money Added Successfully via Card " + defaultCard.getMaskedCardNumber();
     }
 }

@@ -1,5 +1,6 @@
 package com.revpayproject.revpay.controller;
 
+import com.revpayproject.revpay.dto.AddMoneyFromCardDto;
 import com.revpayproject.revpay.dto.AddMoneyRequest;
 import com.revpayproject.revpay.dto.TransactionResponse;
 import com.revpayproject.revpay.dto.TransferRequest;
@@ -43,5 +44,13 @@ public class WalletController {
     @GetMapping("/transactions")
     public List<TransactionResponse> getTransactions() {
         return walletService.getTransactions(getLoggedInEmail());
+    }
+
+    @PostMapping("/add-from-card")
+    public String addMoneyFromCard(@RequestBody AddMoneyFromCardDto dto) {
+        return walletService.addMoneyFromCard(
+                getLoggedInEmail(),
+                dto.getAmount()
+        );
     }
 }
