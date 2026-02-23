@@ -15,6 +15,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.revpayproject.revpay.enums.TransactionStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import com.revpayproject.revpay.specification.TransactionSpecification;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -212,5 +216,38 @@ public class WalletService {
                     "ALERT"
             );
         }
+    }
+
+    public Page<Transaction> filterTransactions(
+            String email,
+            String type,
+            TransactionStatus status,
+            BigDecimal minAmount,
+            BigDecimal maxAmount,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            Pageable pageable) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Specification<Transaction> spec =
+                Specification.where(TransactionSpecification.hasType(type))
+                        .and(TransactionSpecification.hasStatus(status))
+                        .and(TransactionSpecification.minAmount(minAmount))
+                        .and(TransactionSpecification.maxAmount(maxAmount))
+                        .and(TransactionSpecification.startDate(startDate))
+                        .and(TransactionSpecification.endDate(endDate));
+
+        // Restrict only user’s transactions
+        Specification<Transaction> userSpec = (root, query, cb) ->
+                cb.or(
+                        cb.equal(root.get("sender"), user),
+                        cb.equal(root.get("receiver"), user)
+                );
+
+        spec = spec.and(userSpec);
+
+        return transactionRepository.findAll(spec, pageable);
     }
 }

@@ -48,8 +48,8 @@ public class AdminService {
 
         Specification<Transaction> spec = Specification
                 .where(TransactionSpecification.hasStatus(status))
-                .and(TransactionSpecification.createdAfter(startDate))
-                .and(TransactionSpecification.createdBefore(endDate));
+                .and(TransactionSpecification.startDate(startDate))
+                .and(TransactionSpecification.endDate(endDate));
 
         return transactionRepository.findAll(spec, pageable);
     }
