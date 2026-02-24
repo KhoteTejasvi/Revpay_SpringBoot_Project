@@ -2,15 +2,21 @@ package com.revpayproject.revpay.service;
 
 import com.revpayproject.revpay.dto.ApplyLoanDto;
 import com.revpayproject.revpay.entity.Loan;
+import com.revpayproject.revpay.entity.Transaction;
 import com.revpayproject.revpay.entity.User;
 import com.revpayproject.revpay.enums.LoanStatus;
 import com.revpayproject.revpay.enums.Role;
 import com.revpayproject.revpay.repository.LoanRepository;
+import com.revpayproject.revpay.repository.TransactionRepository;
 import com.revpayproject.revpay.repository.UserRepository;
+import com.revpayproject.revpay.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import com.revpayproject.revpay.dto.LoanResponse;
-
+import com.revpayproject.revpay.enums.TransactionStatus;
+import jakarta.transaction.Transactional;
+import com.revpayproject.revpay.entity.Wallet;
+import java.math.RoundingMode;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -22,6 +28,9 @@ public class LoanService {
 
     private final LoanRepository loanRepository;
     private final UserRepository userRepository;
+    private final WalletRepository walletRepository;
+    private final TransactionRepository transactionRepository;
+    private final NotificationService notificationService;
 
     public String applyLoan(String email, ApplyLoanDto dto) {
 
@@ -32,10 +41,11 @@ public class LoanService {
             throw new RuntimeException("Only BUSINESS users can apply for loan");
         }
 
-        BigDecimal interestRate = BigDecimal.valueOf(10); // 10% fixed for now
+        BigDecimal interestRate = BigDecimal.valueOf(10);
 
-        BigDecimal monthlyRate = interestRate.divide(BigDecimal.valueOf(12), 4, BigDecimal.ROUND_HALF_UP)
-                .divide(BigDecimal.valueOf(100), 4, BigDecimal.ROUND_HALF_UP);
+        BigDecimal monthlyRate = interestRate
+                .divide(BigDecimal.valueOf(12), 4, RoundingMode.HALF_UP)
+                .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
 
         BigDecimal emi = calculateEMI(
                 dto.getLoanAmount(),
@@ -87,5 +97,48 @@ public class LoanService {
                         .appliedAt(loan.getAppliedAt())
                         .build())
                 .toList();
+    }
+
+    @Transactional
+    public String approveLoan(Long loanId) {
+
+        Loan loan = loanRepository.findById(loanId)
+                .orElseThrow(() -> new RuntimeException("Loan not found"));
+
+        if (loan.getStatus() != LoanStatus.PENDING) {
+            throw new RuntimeException("Only pending loans can be approved");
+        }
+
+        User businessUser = loan.getBusinessUser();
+
+        Wallet wallet = walletRepository.findByUser(businessUser)
+                .orElseThrow(() -> new RuntimeException("Business wallet not found"));
+
+        // Credit wallet
+        wallet.setBalance(
+                wallet.getBalance().add(loan.getLoanAmount())
+        );
+
+        loan.setStatus(LoanStatus.ACTIVE);
+        loan.setApprovedAt(LocalDateTime.now());
+
+        // Create transaction record
+        Transaction transaction = new Transaction();
+        transaction.setAmount(loan.getLoanAmount());
+        transaction.setType("LOAN_CREDIT");
+        transaction.setStatus(TransactionStatus.SUCCESS);
+        transaction.setCreatedAt(LocalDateTime.now());
+        transaction.setSender(null);
+        transaction.setReceiver(businessUser);
+
+        transactionRepository.save(transaction);
+
+        notificationService.createNotification(
+                businessUser,
+                "Loan approved and credited ₹" + loan.getLoanAmount(),
+                "LOAN"
+        );
+
+        return "Loan approved successfully";
     }
 }

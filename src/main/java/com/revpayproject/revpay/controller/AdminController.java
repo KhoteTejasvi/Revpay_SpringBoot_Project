@@ -10,17 +10,14 @@ import com.revpayproject.revpay.repository.UserRepository;
 import com.revpayproject.revpay.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDateTime;
+import com.revpayproject.revpay.service.LoanService;
 
 import java.util.List;
 
@@ -33,6 +30,7 @@ public class AdminController {
 
     private final UserRepository userRepository;
     private final AdminService adminService;
+    private final LoanService loanService;
 
     @GetMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")
@@ -88,5 +86,11 @@ public class AdminController {
             Pageable pageable) {
 
         return adminService.filterTransactions(status, startDate, endDate, pageable);
+    }
+
+    @PostMapping("/loan/{id}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String approveLoan(@PathVariable Long id) {
+        return loanService.approveLoan(id);
     }
 }
