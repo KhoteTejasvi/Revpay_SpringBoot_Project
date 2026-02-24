@@ -31,4 +31,9 @@ public class LoanController {
     public List<com.revpayproject.revpay.dto.LoanResponse> getMyLoans() {
         return loanService.getMyLoans(getLoggedInEmail());
     }
+
+    @PostMapping("/{id}/repay")
+    public String repayLoan(@PathVariable Long id) {
+        return loanService.repayLoan(id, getLoggedInEmail());
+    }
 }

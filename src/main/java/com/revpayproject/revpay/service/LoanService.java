@@ -141,4 +141,61 @@ public class LoanService {
 
         return "Loan approved successfully";
     }
+
+    @Transactional
+    public String repayLoan(Long loanId, String email) {
+
+        Loan loan = loanRepository.findById(loanId)
+                .orElseThrow(() -> new RuntimeException("Loan not found"));
+
+        if (!loan.getBusinessUser().getEmail().equals(email)) {
+            throw new RuntimeException("Unauthorized access");
+        }
+
+        if (loan.getStatus() != LoanStatus.ACTIVE) {
+            throw new RuntimeException("Loan is not active");
+        }
+
+        Wallet wallet = walletRepository.findByUser(loan.getBusinessUser())
+                .orElseThrow(() -> new RuntimeException("Wallet not found"));
+
+        BigDecimal emi = loan.getEmiAmount();
+
+        if (wallet.getBalance().compareTo(emi) < 0) {
+            throw new RuntimeException("Insufficient balance to pay EMI");
+        }
+
+        // Deduct EMI from wallet
+        wallet.setBalance(wallet.getBalance().subtract(emi));
+
+        // Reduce remaining amount
+        loan.setRemainingAmount(
+                loan.getRemainingAmount().subtract(emi)
+        );
+
+        // If fully paid
+        if (loan.getRemainingAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            loan.setStatus(LoanStatus.CLOSED);
+            loan.setRemainingAmount(BigDecimal.ZERO);
+        }
+
+        // Create transaction record
+        Transaction transaction = new Transaction();
+        transaction.setAmount(emi);
+        transaction.setType("LOAN_REPAYMENT");
+        transaction.setStatus(TransactionStatus.SUCCESS);
+        transaction.setCreatedAt(LocalDateTime.now());
+        transaction.setSender(loan.getBusinessUser());
+        transaction.setReceiver(null);
+
+        transactionRepository.save(transaction);
+
+        notificationService.createNotification(
+                loan.getBusinessUser(),
+                "EMI paid ₹" + emi,
+                "LOAN"
+        );
+
+        return "EMI paid successfully";
+    }
 }
