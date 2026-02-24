@@ -25,11 +25,11 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/wallet/**").hasRole("USER")
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/invoice/create", "/api/invoice/*/send").hasRole("BUSINESS")
 
-                        .requestMatchers("/api/invoice/*/pay").hasRole("USER")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                        .requestMatchers("/api/transactions/export/**").hasAnyAuthority("ROLE_USER", "ROLE_BUSINESS")
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter,

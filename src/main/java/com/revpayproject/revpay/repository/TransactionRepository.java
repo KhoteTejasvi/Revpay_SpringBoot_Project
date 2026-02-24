@@ -13,4 +13,5 @@ public interface TransactionRepository
         JpaSpecificationExecutor<Transaction> {
     long countByStatus(TransactionStatus status);
     List<Transaction> findBySenderOrReceiver(User sender, User receiver);
+    List<Transaction> findBySender_EmailOrReceiver_Email(String senderEmail,String receiverEmail);
 }

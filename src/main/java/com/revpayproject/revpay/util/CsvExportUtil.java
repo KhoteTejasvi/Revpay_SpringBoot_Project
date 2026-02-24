@@ -7,7 +7,8 @@ import java.util.List;
 
 public class CsvExportUtil {
 
-    public static void writeTransactions(PrintWriter writer, List<Transaction> transactions) {
+    public static void writeTransactions(PrintWriter writer,
+                                         List<Transaction> transactions) {
 
         writer.println("ID,Amount,Type,Status,CreatedAt");
 
