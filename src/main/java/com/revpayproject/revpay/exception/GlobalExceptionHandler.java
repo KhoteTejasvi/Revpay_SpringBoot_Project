@@ -1,10 +1,11 @@
 package com.revpayproject.revpay.exception;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.validation.FieldError;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,5 +22,14 @@ public class GlobalExceptionHandler {
         }
 
         return ResponseEntity.badRequest().body(errors);
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<String> handleOptimisticLock(
+            ObjectOptimisticLockingFailureException ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body("Transaction conflict. Please try again.");
     }
 }

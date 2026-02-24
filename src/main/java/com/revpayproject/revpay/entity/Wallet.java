@@ -17,6 +17,9 @@ public class Wallet {
 
     private BigDecimal balance = BigDecimal.ZERO;
 
+    @Version
+    private Long version;
+
     @OneToOne
     @JoinColumn(name = "user_id")
     private User user;
