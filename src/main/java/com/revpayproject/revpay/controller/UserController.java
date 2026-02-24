@@ -2,6 +2,7 @@ package com.revpayproject.revpay.controller;
 
 import com.revpayproject.revpay.dto.CreateBusinessDto;
 import com.revpayproject.revpay.dto.NotificationPreferenceDto;
+import com.revpayproject.revpay.dto.SetPinDto;
 import com.revpayproject.revpay.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -38,5 +39,15 @@ public class UserController {
                 getLoggedInEmail(),
                 dto
         );
+    }
+
+    @PostMapping("/set-pin")
+    public String setPin(@RequestBody SetPinDto dto) {
+
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        return userService.setTransactionPin(email, dto.getPin());
     }
 }

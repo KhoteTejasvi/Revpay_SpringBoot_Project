@@ -1,6 +1,7 @@
 package com.revpayproject.revpay.controller;
 
 import com.revpayproject.revpay.dto.ApplyLoanDto;
+import com.revpayproject.revpay.dto.TransactionPinDto;
 import com.revpayproject.revpay.entity.Loan;
 import com.revpayproject.revpay.service.LoanService;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +34,13 @@ public class LoanController {
     }
 
     @PostMapping("/{id}/repay")
-    public String repayLoan(@PathVariable Long id) {
-        return loanService.repayLoan(id, getLoggedInEmail());
+    public String repayLoan(@PathVariable Long id,
+                            @RequestBody TransactionPinDto dto) {
+
+        return loanService.repayLoan(
+                id,
+                getLoggedInEmail(),
+                dto.getPin()
+        );
     }
 }

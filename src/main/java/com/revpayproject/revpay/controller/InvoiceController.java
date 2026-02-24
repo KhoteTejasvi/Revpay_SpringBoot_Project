@@ -2,6 +2,7 @@ package com.revpayproject.revpay.controller;
 
 import com.revpayproject.revpay.dto.CreateInvoiceDto;
 import com.revpayproject.revpay.dto.InvoiceResponse;
+import com.revpayproject.revpay.dto.TransactionPinDto;
 import com.revpayproject.revpay.entity.Invoice;
 import com.revpayproject.revpay.repository.InvoiceRepository;
 import com.revpayproject.revpay.service.InvoiceService;
@@ -34,8 +35,14 @@ public class InvoiceController {
     }
 
     @PostMapping("/{id}/pay")
-    public String payInvoice(@PathVariable Long id) {
-        return invoiceService.payInvoice(id, getLoggedInEmail());
+    public String payInvoice(@PathVariable Long id,
+                             @RequestBody TransactionPinDto dto) {
+
+        return invoiceService.payInvoice(
+                id,
+                getLoggedInEmail(),
+                dto.getPin()
+        );
     }
 
     @PostMapping("/{id}/send")

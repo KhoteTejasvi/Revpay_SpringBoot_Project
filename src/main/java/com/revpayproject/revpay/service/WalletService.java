@@ -36,6 +36,7 @@ public class WalletService {
     private final TransactionRepository transactionRepository;
     private final PaymentMethodRepository paymentMethodRepository;
     private final NotificationService notificationService;
+    private final UserService userService;
     private static final BigDecimal LOW_BALANCE_THRESHOLD = new BigDecimal("500");
 
     public BigDecimal getBalance(String email) {
@@ -69,6 +70,8 @@ public class WalletService {
 
         User sender = userRepository.findByEmail(senderEmail)
                 .orElseThrow(() -> new RuntimeException("Sender not found"));
+
+        userService.validatePin(sender, request.getTransactionPin());
 
         User receiver = userRepository.findByEmail(request.getReceiverEmail())
                 .orElseThrow(() -> new RuntimeException("Receiver not found"));

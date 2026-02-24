@@ -8,6 +8,7 @@ import com.revpayproject.revpay.enums.Role;
 import com.revpayproject.revpay.repository.BusinessProfileRepository;
 import com.revpayproject.revpay.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,6 +17,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final BusinessProfileRepository businessProfileRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public String updateNotificationPreferences(String email,
                                                 NotificationPreferenceDto dto) {
@@ -55,5 +57,32 @@ public class UserService {
         userRepository.save(user);
 
         return "Account upgraded to BUSINESS successfully";
+    }
+
+    public String setTransactionPin(String email, String pin) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (pin.length() != 4) {
+            throw new RuntimeException("PIN must be 4 digits");
+        }
+
+        user.setTransactionPin(passwordEncoder.encode(pin));
+
+        userRepository.save(user);
+
+        return "Transaction PIN set successfully";
+    }
+
+    public void validatePin(User user, String rawPin) {
+
+        if (user.getTransactionPin() == null) {
+            throw new RuntimeException("Transaction PIN not set");
+        }
+
+        if (!passwordEncoder.matches(rawPin, user.getTransactionPin())) {
+            throw new RuntimeException("Invalid Transaction PIN");
+        }
     }
 }

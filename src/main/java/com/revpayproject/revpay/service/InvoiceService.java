@@ -27,6 +27,7 @@ public class InvoiceService {
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
     private final NotificationService notificationService;
+    private final UserService userService;
 
     public String createInvoice(String email, CreateInvoiceDto dto) {
 
@@ -82,7 +83,9 @@ public class InvoiceService {
     }
 
     @Transactional
-    public String payInvoice(Long invoiceId, String payerEmail) {
+    public String payInvoice(Long invoiceId,
+                             String payerEmail,
+                             String pin) {
 
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new RuntimeException("Invoice not found"));
@@ -94,6 +97,8 @@ public class InvoiceService {
 
         User payer = userRepository.findByEmail(payerEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        userService.validatePin(payer, pin);
 
         Wallet payerWallet = walletRepository.findByUser(payer)
                 .orElseThrow(() -> new RuntimeException("Payer wallet not found"));

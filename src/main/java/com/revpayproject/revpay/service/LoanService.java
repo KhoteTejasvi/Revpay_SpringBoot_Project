@@ -29,6 +29,7 @@ public class LoanService {
     private final LoanRepository loanRepository;
     private final UserRepository userRepository;
     private final WalletRepository walletRepository;
+    private final UserService userService;
     private final TransactionRepository transactionRepository;
     private final NotificationService notificationService;
 
@@ -143,7 +144,9 @@ public class LoanService {
     }
 
     @Transactional
-    public String repayLoan(Long loanId, String email) {
+    public String repayLoan(Long loanId,
+                            String email,
+                            String pin) {
 
         Loan loan = loanRepository.findById(loanId)
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
@@ -156,7 +159,12 @@ public class LoanService {
             throw new RuntimeException("Loan is not active");
         }
 
-        Wallet wallet = walletRepository.findByUser(loan.getBusinessUser())
+        User businessUser = loan.getBusinessUser();
+
+        // 🔐 Enforce Transaction PIN
+        userService.validatePin(businessUser, pin);
+
+        Wallet wallet = walletRepository.findByUser(businessUser)
                 .orElseThrow(() -> new RuntimeException("Wallet not found"));
 
         BigDecimal emi = loan.getEmiAmount();
@@ -165,33 +173,29 @@ public class LoanService {
             throw new RuntimeException("Insufficient balance to pay EMI");
         }
 
-        // Deduct EMI from wallet
         wallet.setBalance(wallet.getBalance().subtract(emi));
 
-        // Reduce remaining amount
         loan.setRemainingAmount(
                 loan.getRemainingAmount().subtract(emi)
         );
 
-        // If fully paid
         if (loan.getRemainingAmount().compareTo(BigDecimal.ZERO) <= 0) {
             loan.setStatus(LoanStatus.CLOSED);
             loan.setRemainingAmount(BigDecimal.ZERO);
         }
 
-        // Create transaction record
         Transaction transaction = new Transaction();
         transaction.setAmount(emi);
         transaction.setType("LOAN_REPAYMENT");
         transaction.setStatus(TransactionStatus.SUCCESS);
         transaction.setCreatedAt(LocalDateTime.now());
-        transaction.setSender(loan.getBusinessUser());
+        transaction.setSender(businessUser);
         transaction.setReceiver(null);
 
         transactionRepository.save(transaction);
 
         notificationService.createNotification(
-                loan.getBusinessUser(),
+                businessUser,
                 "EMI paid ₹" + emi,
                 "LOAN"
         );

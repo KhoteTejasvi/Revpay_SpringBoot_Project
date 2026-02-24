@@ -17,4 +17,8 @@ public class TransferRequest {
     @NotNull(message = "Amount required")
     @Positive(message = "Amount must be positive")
     private BigDecimal amount;
+
+    @NotBlank(message = "Transaction PIN required")
+    @Size(min = 4, max = 4, message = "PIN must be 4 digits")
+    private String transactionPin;
 }
