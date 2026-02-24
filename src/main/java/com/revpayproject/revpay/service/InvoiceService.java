@@ -1,13 +1,15 @@
 package com.revpayproject.revpay.service;
 
 import com.revpayproject.revpay.dto.CreateInvoiceDto;
-import com.revpayproject.revpay.entity.Invoice;
-import com.revpayproject.revpay.entity.InvoiceItem;
-import com.revpayproject.revpay.entity.User;
+import com.revpayproject.revpay.entity.*;
 import com.revpayproject.revpay.enums.InvoiceStatus;
 import com.revpayproject.revpay.enums.Role;
+import com.revpayproject.revpay.enums.TransactionStatus;
 import com.revpayproject.revpay.repository.InvoiceRepository;
+import com.revpayproject.revpay.repository.TransactionRepository;
 import com.revpayproject.revpay.repository.UserRepository;
+import com.revpayproject.revpay.repository.WalletRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +24,9 @@ public class InvoiceService {
 
     private final UserRepository userRepository;
     private final InvoiceRepository invoiceRepository;
+    private final WalletRepository walletRepository;
+    private final TransactionRepository transactionRepository;
+    private final NotificationService notificationService;
 
     public String createInvoice(String email, CreateInvoiceDto dto) {
 
@@ -72,6 +77,114 @@ public class InvoiceService {
 
         invoiceRepository.save(invoice);
 
-        return "Invoice created successfully";
+        return "Invoice created successfully. ID: " + invoice.getId();
+
     }
+
+    @Transactional
+    public String payInvoice(Long invoiceId, String payerEmail) {
+
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new RuntimeException("Invoice not found"));
+
+        if (invoice.getStatus() != InvoiceStatus.SENT
+                && invoice.getStatus() != InvoiceStatus.OVERDUE) {
+            throw new RuntimeException("Invoice cannot be paid");
+        }
+
+        User payer = userRepository.findByEmail(payerEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Wallet payerWallet = walletRepository.findByUser(payer)
+                .orElseThrow(() -> new RuntimeException("Payer wallet not found"));
+
+        Wallet businessWallet = walletRepository.findByUser(invoice.getBusinessUser())
+                .orElseThrow(() -> new RuntimeException("Business wallet not found"));
+
+        if (payerWallet.getBalance().compareTo(invoice.getTotalAmount()) < 0) {
+            throw new RuntimeException("Insufficient balance to pay invoice");
+        }
+
+        // Deduct from payer
+        payerWallet.setBalance(
+                payerWallet.getBalance().subtract(invoice.getTotalAmount())
+        );
+
+        // Credit business
+        businessWallet.setBalance(
+                businessWallet.getBalance().add(invoice.getTotalAmount())
+        );
+
+        // Update invoice status
+        invoice.setStatus(InvoiceStatus.PAID);
+
+        // Create transaction record
+        Transaction transaction = new Transaction();
+        transaction.setAmount(invoice.getTotalAmount());
+        transaction.setType("INVOICE_PAYMENT");
+        transaction.setStatus(TransactionStatus.SUCCESS);
+        transaction.setCreatedAt(LocalDateTime.now());
+        transaction.setSender(payer);
+        transaction.setReceiver(invoice.getBusinessUser());
+
+        transactionRepository.save(transaction);
+
+        // Notifications
+        notificationService.createNotification(
+                invoice.getBusinessUser(),
+                "Invoice paid: ₹" + invoice.getTotalAmount(),
+                "INVOICE"
+        );
+
+        notificationService.createNotification(
+                payer,
+                "You paid invoice ₹" + invoice.getTotalAmount(),
+                "INVOICE"
+        );
+
+        notificationService.checkLowBalance(payer, payerWallet);
+
+        return "Invoice paid successfully";
+    }
+
+    public List<com.revpayproject.revpay.dto.InvoiceResponse> getMyInvoices(String email) {
+
+        return invoiceRepository.findByBusinessUser_Email(email)
+                .stream()
+                .map(invoice -> com.revpayproject.revpay.dto.InvoiceResponse.builder()
+                        .id(invoice.getId())
+                        .customerName(invoice.getCustomerName())
+                        .customerEmail(invoice.getCustomerEmail())
+                        .totalAmount(invoice.getTotalAmount())
+                        .dueDate(invoice.getDueDate())
+                        .status(invoice.getStatus())
+                        .build())
+                .toList();
+    }
+
+    @Transactional
+    public String sendInvoice(Long invoiceId, String email) {
+
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new RuntimeException("Invoice not found"));
+
+        if (!invoice.getBusinessUser().getEmail().equals(email)) {
+            throw new RuntimeException("Unauthorized access");
+        }
+
+        if (invoice.getStatus() != InvoiceStatus.DRAFT) {
+            throw new RuntimeException("Only DRAFT invoices can be sent");
+        }
+
+        invoice.setStatus(InvoiceStatus.SENT);
+
+        notificationService.createNotification(
+                invoice.getBusinessUser(),
+                "Invoice sent to " + invoice.getCustomerEmail(),
+                "INVOICE"
+        );
+
+        return "Invoice sent successfully";
+    }
+
 }

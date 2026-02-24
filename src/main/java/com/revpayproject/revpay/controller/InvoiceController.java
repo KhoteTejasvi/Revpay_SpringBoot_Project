@@ -1,6 +1,7 @@
 package com.revpayproject.revpay.controller;
 
 import com.revpayproject.revpay.dto.CreateInvoiceDto;
+import com.revpayproject.revpay.dto.InvoiceResponse;
 import com.revpayproject.revpay.entity.Invoice;
 import com.revpayproject.revpay.repository.InvoiceRepository;
 import com.revpayproject.revpay.service.InvoiceService;
@@ -30,6 +31,21 @@ public class InvoiceController {
                 getLoggedInEmail(),
                 dto
         );
+    }
+
+    @PostMapping("/{id}/pay")
+    public String payInvoice(@PathVariable Long id) {
+        return invoiceService.payInvoice(id, getLoggedInEmail());
+    }
+
+    @PostMapping("/{id}/send")
+    public String sendInvoice(@PathVariable Long id) {
+        return invoiceService.sendInvoice(id, getLoggedInEmail());
+    }
+
+    @GetMapping("/my")
+    public List<InvoiceResponse> getMyInvoices() {
+        return invoiceService.getMyInvoices(getLoggedInEmail());
     }
 
     @GetMapping("/all")

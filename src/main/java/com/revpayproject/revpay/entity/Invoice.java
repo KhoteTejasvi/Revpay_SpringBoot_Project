@@ -30,9 +30,12 @@ public class Invoice {
     @Enumerated(EnumType.STRING)
     private InvoiceStatus status;
 
+
+
     @ManyToOne
     @JoinColumn(name = "business_user_id")
     private User businessUser;
+
 
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL)
     private List<InvoiceItem> items;

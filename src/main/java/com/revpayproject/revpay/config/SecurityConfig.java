@@ -27,6 +27,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/wallet/**").hasRole("USER")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/invoice/create", "/api/invoice/*/send").hasRole("BUSINESS")
+
+                        .requestMatchers("/api/invoice/*/pay").hasRole("USER")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter,
