@@ -28,7 +28,7 @@ public class LoanController {
     }
 
     @GetMapping("/my")
-    public List<Loan> getMyLoans() {
+    public List<com.revpayproject.revpay.dto.LoanResponse> getMyLoans() {
         return loanService.getMyLoans(getLoggedInEmail());
     }
 }

@@ -9,6 +9,8 @@ import com.revpayproject.revpay.repository.LoanRepository;
 import com.revpayproject.revpay.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import com.revpayproject.revpay.dto.LoanResponse;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -70,7 +72,20 @@ public class LoanService {
         return BigDecimal.valueOf(emi);
     }
 
-    public List<Loan> getMyLoans(String email) {
-        return loanRepository.findByBusinessUser_Email(email);
+    public List<LoanResponse> getMyLoans(String email) {
+
+        return loanRepository.findByBusinessUser_Email(email)
+                .stream()
+                .map(loan -> LoanResponse.builder()
+                        .id(loan.getId())
+                        .loanAmount(loan.getLoanAmount())
+                        .interestRate(loan.getInterestRate())
+                        .tenureMonths(loan.getTenureMonths())
+                        .emiAmount(loan.getEmiAmount())
+                        .remainingAmount(loan.getRemainingAmount())
+                        .status(loan.getStatus())
+                        .appliedAt(loan.getAppliedAt())
+                        .build())
+                .toList();
     }
 }
