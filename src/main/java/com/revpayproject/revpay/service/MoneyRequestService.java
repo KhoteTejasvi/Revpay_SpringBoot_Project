@@ -1,5 +1,6 @@
 package com.revpayproject.revpay.service;
 
+import com.revpayproject.revpay.dto.MoneyRequestResponse;
 import com.revpayproject.revpay.dto.SendRequestDto;
 import com.revpayproject.revpay.entity.*;
 import com.revpayproject.revpay.enums.RequestStatus;
@@ -30,6 +31,10 @@ public class MoneyRequestService {
         User receiver = userRepository.findByEmail(dto.getReceiverEmail())
                 .orElseThrow(() -> new RuntimeException("Receiver not found"));
 
+        if (sender.getEmail().equals(receiver.getEmail())) {
+            throw new RuntimeException("You cannot request money from yourself");
+        }
+
         MoneyRequest request = new MoneyRequest();
         request.setSender(sender);
         request.setReceiver(receiver);
@@ -43,7 +48,6 @@ public class MoneyRequestService {
         return "Request Sent Successfully";
     }
 
-    // ACCEPT REQUEST
     @Transactional
     public String acceptRequest(Long requestId, String receiverEmail) {
 
@@ -68,43 +72,41 @@ public class MoneyRequestService {
             throw new RuntimeException("Insufficient Balance");
         }
 
-        // Deduct from receiver
         receiverWallet.setBalance(
                 receiverWallet.getBalance().subtract(request.getAmount())
         );
 
-        notificationService.checkLowBalance(request.getReceiver(), receiverWallet);
-
-        // Add to sender
         senderWallet.setBalance(
                 senderWallet.getBalance().add(request.getAmount())
         );
 
-        // Update request status
-        request.setStatus(RequestStatus.ACCEPTED);
+        walletRepository.save(receiverWallet);
+        walletRepository.save(senderWallet);
 
-        // Notify sender
+        request.setStatus(RequestStatus.ACCEPTED);
+        moneyRequestRepository.save(request);
+
+        notificationService.checkLowBalance(request.getReceiver(), receiverWallet);
+
         notificationService.createNotification(
                 request.getSender(),
                 "Your money request of ₹" + request.getAmount() + " was accepted",
                 "REQUEST"
         );
 
-        // Notify receiver
         notificationService.createNotification(
                 request.getReceiver(),
                 "You accepted a request of ₹" + request.getAmount(),
                 "REQUEST"
         );
 
-        // Create transaction record
         Transaction transaction = new Transaction();
         transaction.setAmount(request.getAmount());
         transaction.setType("REQUEST_PAYMENT");
         transaction.setStatus(TransactionStatus.SUCCESS);
         transaction.setCreatedAt(LocalDateTime.now());
-        transaction.setSender(request.getReceiver());   // Money paid by receiver
-        transaction.setReceiver(request.getSender());   // Money received by sender
+        transaction.setSender(request.getReceiver());   // Paid by receiver
+        transaction.setReceiver(request.getSender());   // Received by sender
 
         transactionRepository.save(transaction);
 
@@ -132,12 +134,23 @@ public class MoneyRequestService {
     }
 
     // INCOMING REQUESTS
-    public List<MoneyRequest> getIncomingRequests(String email) {
+    public List<MoneyRequestResponse> getIncomingRequests(String email) {
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return moneyRequestRepository.findByReceiver(user);
+        return moneyRequestRepository.findByReceiver(user)
+                .stream()
+                .map(r -> new MoneyRequestResponse(
+                        r.getId(),
+                        r.getAmount(),
+                        r.getNote(),
+                        r.getStatus().name(),
+                        r.getCreatedAt(),
+                        r.getSender().getEmail(),
+                        r.getReceiver().getEmail()
+                ))
+                .toList();
     }
 
     // OUTGOING REQUESTS
@@ -147,5 +160,24 @@ public class MoneyRequestService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         return moneyRequestRepository.findBySender(user);
+    }
+
+    public String cancelRequest(Long requestId, String senderEmail) {
+
+        MoneyRequest request = moneyRequestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        if (!request.getSender().getEmail().equals(senderEmail)) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        if (request.getStatus() != RequestStatus.PENDING) {
+            throw new RuntimeException("Only pending requests can be cancelled");
+        }
+
+        request.setStatus(RequestStatus.CANCELLED);
+        moneyRequestRepository.save(request);
+
+        return "Request Cancelled Successfully";
     }
 }

@@ -79,14 +79,22 @@ public class TransactionController {
     }
 
     @GetMapping("/my")
-    public Page<TransactionResponse> getMyTransactions(Pageable pageable) {
+    public Page<TransactionResponse> getMyTransactions(
+            Pageable pageable,
+            @RequestParam(required = false) Long transactionId,
+            @RequestParam(required = false) String name
+    ) {
 
         String email = SecurityContextHolder
                 .getContext()
                 .getAuthentication()
                 .getName();
 
-        return transactionService
-                .getUserTransactionsPaginated(email, pageable);
+        return transactionService.getUserTransactionsPaginated(
+                email,
+                pageable,
+                transactionId,
+                name
+        );
     }
 }

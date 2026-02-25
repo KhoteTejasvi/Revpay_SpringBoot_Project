@@ -23,22 +23,62 @@ public class TransactionService {
 
     public Page<TransactionResponse> getUserTransactionsPaginated(
             String email,
-            Pageable pageable
+            Pageable pageable,
+            Long transactionId,
+            String name
     ) {
-        return transactionRepository
-                .findBySender_EmailOrReceiver_Email(email, email, pageable)
-                .map(transaction -> new TransactionResponse(
-                        transaction.getId(),
-                        transaction.getAmount(),
-                        transaction.getType(),
-                        transaction.getStatus(),
-                        transaction.getCreatedAt(),
-                        transaction.getSender() != null
-                                ? transaction.getSender().getEmail()
-                                : null,
-                        transaction.getReceiver() != null
-                                ? transaction.getReceiver().getEmail()
-                                : null
-                ));
+
+        Page<Transaction> transactions;
+
+        if (transactionId != null) {
+
+            Page<Transaction> sent =
+                    transactionRepository.findByIdAndSender_Email(
+                            transactionId, email, pageable);
+
+            Page<Transaction> received =
+                    transactionRepository.findByIdAndReceiver_Email(
+                            transactionId, email, pageable);
+
+            if (!sent.isEmpty()) {
+                transactions = sent;
+            } else {
+                transactions = received;
+            }
+
+        } else if (name != null && !name.trim().isEmpty()) {
+
+            transactions = transactionRepository
+                    .searchByNameForUser(name, email, pageable);
+
+        } else {
+
+            transactions = transactionRepository
+                    .findBySender_EmailOrReceiver_Email(
+                            email, email, pageable
+                    );
+        }
+
+        return transactions.map(this::mapToResponse);
+    }
+    private TransactionResponse mapToResponse(Transaction transaction) {
+
+        String senderEmail = transaction.getSender() != null
+                ? transaction.getSender().getEmail()
+                : null;
+
+        String receiverEmail = transaction.getReceiver() != null
+                ? transaction.getReceiver().getEmail()
+                : null;
+
+        return new TransactionResponse(
+                transaction.getId(),
+                transaction.getAmount(),
+                transaction.getType(),
+                transaction.getStatus(),
+                transaction.getCreatedAt(),
+                senderEmail,
+                receiverEmail
+        );
     }
 }

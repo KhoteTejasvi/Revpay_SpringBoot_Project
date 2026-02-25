@@ -69,4 +69,32 @@ ORDER BY DATE(t.createdAt)
             String receiverEmail,
             Pageable pageable
     );
+
+    Page<Transaction> findByIdAndSender_Email(
+            Long id,
+            String senderEmail,
+            Pageable pageable
+    );
+
+    Page<Transaction> findByIdAndReceiver_Email(
+            Long id,
+            String receiverEmail,
+            Pageable pageable
+    );
+
+    @Query("""
+SELECT t FROM Transaction t
+WHERE (
+    LOWER(t.sender.fullName) LIKE LOWER(CONCAT('%', :name, '%'))
+    OR LOWER(t.receiver.fullName) LIKE LOWER(CONCAT('%', :name, '%'))
+    OR LOWER(t.sender.email) LIKE LOWER(CONCAT('%', :name, '%'))
+    OR LOWER(t.receiver.email) LIKE LOWER(CONCAT('%', :name, '%'))
+)
+AND (t.sender.email = :email OR t.receiver.email = :email)
+""")
+    Page<Transaction> searchByNameForUser(
+            String name,
+            String email,
+            Pageable pageable
+    );
 }

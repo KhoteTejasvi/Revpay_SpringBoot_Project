@@ -1,7 +1,9 @@
 package com.revpayproject.revpay.controller;
 
+import com.revpayproject.revpay.dto.MoneyRequestResponse;
 import com.revpayproject.revpay.dto.SendRequestDto;
 import com.revpayproject.revpay.entity.MoneyRequest;
+import com.revpayproject.revpay.enums.RequestStatus;
 import com.revpayproject.revpay.service.MoneyRequestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -42,7 +44,7 @@ public class MoneyRequestController {
 
     // Incoming requests
     @GetMapping("/incoming")
-    public List<MoneyRequest> getIncomingRequests() {
+    public List<MoneyRequestResponse> getIncomingRequests() {
         return moneyRequestService.getIncomingRequests(getLoggedInEmail());
     }
 
@@ -50,5 +52,10 @@ public class MoneyRequestController {
     @GetMapping("/outgoing")
     public List<MoneyRequest> getOutgoingRequests() {
         return moneyRequestService.getOutgoingRequests(getLoggedInEmail());
+    }
+
+    @PutMapping("/{id}/cancel")
+    public String cancelRequest(@PathVariable Long id) {
+        return moneyRequestService.cancelRequest(id, getLoggedInEmail());
     }
 }
