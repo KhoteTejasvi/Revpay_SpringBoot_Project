@@ -47,4 +47,17 @@ GROUP BY t.sender.email
 ORDER BY SUM(t.amount) DESC
 """)
     List<Object[]> findTopCustomers(Long businessId, Pageable pageable);
+
+    @Query("""
+SELECT DATE(t.createdAt), COALESCE(SUM(t.amount),0)
+FROM Transaction t
+WHERE t.receiver.id = :businessId
+AND t.createdAt BETWEEN :start AND :end
+GROUP BY DATE(t.createdAt)
+ORDER BY DATE(t.createdAt)
+""")
+    List<Object[]> getDailyRevenue(
+            Long businessId,
+            LocalDateTime start,
+            LocalDateTime end);
 }

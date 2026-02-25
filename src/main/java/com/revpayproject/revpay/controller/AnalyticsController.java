@@ -1,5 +1,6 @@
 package com.revpayproject.revpay.controller;
 
+import com.revpayproject.revpay.dto.PaymentTrendResponse;
 import com.revpayproject.revpay.dto.RevenueResponse;
 import com.revpayproject.revpay.dto.TopCustomerResponse;
 import com.revpayproject.revpay.service.AnalyticsService;
@@ -27,5 +28,13 @@ public class AnalyticsController {
     @GetMapping("/top-customers")
     public List<TopCustomerResponse> getTopCustomers() {
         return analyticsService.getTopCustomers();
+    }
+
+    @PreAuthorize("hasRole('BUSINESS')")
+    @GetMapping("/payment-trends")
+    public List<PaymentTrendResponse> getPaymentTrends(
+            @RequestParam(defaultValue = "7") int days) {
+
+        return analyticsService.getPaymentTrends(days);
     }
 }

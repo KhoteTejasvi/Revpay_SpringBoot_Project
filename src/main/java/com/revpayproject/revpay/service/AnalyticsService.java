@@ -1,5 +1,6 @@
 package com.revpayproject.revpay.service;
 
+import com.revpayproject.revpay.dto.PaymentTrendResponse;
 import com.revpayproject.revpay.dto.RevenueResponse;
 import com.revpayproject.revpay.dto.TopCustomerResponse;
 import com.revpayproject.revpay.entity.User;
@@ -64,6 +65,25 @@ public class AnalyticsService {
         return results.stream()
                 .map(obj -> new TopCustomerResponse(
                         (String) obj[0],
+                        (java.math.BigDecimal) obj[1]
+                ))
+                .collect(Collectors.toList());
+    }
+
+    public List<PaymentTrendResponse> getPaymentTrends(int days) {
+
+        User user = userService.getLoggedInUser();
+
+        LocalDateTime end = LocalDateTime.now();
+        LocalDateTime start = end.minusDays(days);
+
+        List<Object[]> results =
+                transactionRepository.getDailyRevenue(
+                        user.getId(), start, end);
+
+        return results.stream()
+                .map(obj -> new PaymentTrendResponse(
+                        ((java.sql.Date) obj[0]).toLocalDate(),
                         (java.math.BigDecimal) obj[1]
                 ))
                 .collect(Collectors.toList());
