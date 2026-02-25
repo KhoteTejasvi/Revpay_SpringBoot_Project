@@ -11,4 +11,8 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
     List<Loan> findByBusinessUser_Email(String email);
 
     List<Loan> findByStatus(LoanStatus status);
+
+    long countByBusinessUser_EmailAndStatus(
+            String email,
+            com.revpayproject.revpay.enums.LoanStatus status);
 }

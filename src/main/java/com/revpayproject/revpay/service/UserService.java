@@ -10,6 +10,7 @@ import com.revpayproject.revpay.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @Service
 @RequiredArgsConstructor
@@ -84,5 +85,15 @@ public class UserService {
         if (!passwordEncoder.matches(rawPin, user.getTransactionPin())) {
             throw new RuntimeException("Invalid Transaction PIN");
         }
+    }
+
+    public User getLoggedInUser() {
+
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }
