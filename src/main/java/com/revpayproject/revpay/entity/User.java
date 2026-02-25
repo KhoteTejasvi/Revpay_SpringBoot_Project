@@ -8,6 +8,8 @@ import com.revpayproject.revpay.enums.Role;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @Entity
@@ -40,4 +42,12 @@ public class User {
     private boolean transactionNotifications = true;
 
     private boolean lowBalanceNotifications = true;
+
+    @Column(nullable = false)
+    private int failedAttempts = 0;
+
+    @Column(nullable = false)
+    private boolean accountLocked = false;
+
+    private LocalDateTime lockTime;
 }

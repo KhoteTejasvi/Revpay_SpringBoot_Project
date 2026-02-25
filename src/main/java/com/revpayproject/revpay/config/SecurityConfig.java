@@ -1,6 +1,7 @@
 package com.revpayproject.revpay.config;
 
 import com.revpayproject.revpay.security.JwtAuthFilter;
+import com.revpayproject.revpay.security.RateLimitFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +20,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final RateLimitFilter rateLimitFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -27,13 +29,17 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
-                        .requestMatchers("/api/transactions/export/**").hasAnyAuthority("ROLE_USER", "ROLE_BUSINESS")
-
+                        .requestMatchers("/api/transactions/export/**")
+                        .hasAnyAuthority("ROLE_USER", "ROLE_BUSINESS")
                         .anyRequest().authenticated()
                 )
+
+                // 🔥 ADD RATE LIMIT FILTER FIRST
+                .addFilterBefore(rateLimitFilter,
+                        UsernamePasswordAuthenticationFilter.class)
+
+                // 🔥 THEN JWT FILTER
                 .addFilterBefore(jwtAuthFilter,
                         UsernamePasswordAuthenticationFilter.class);
 
