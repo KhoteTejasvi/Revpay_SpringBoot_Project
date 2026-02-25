@@ -1,6 +1,7 @@
 package com.revpayproject.revpay.service;
 
 import com.revpayproject.revpay.dto.CreateInvoiceDto;
+import com.revpayproject.revpay.dto.InvoiceResponse;
 import com.revpayproject.revpay.entity.*;
 import com.revpayproject.revpay.enums.InvoiceStatus;
 import com.revpayproject.revpay.enums.Role;
@@ -12,6 +13,8 @@ import com.revpayproject.revpay.repository.WalletRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -152,17 +155,17 @@ public class InvoiceService {
         return "Invoice paid successfully";
     }
 
-    public List<com.revpayproject.revpay.dto.InvoiceResponse> getMyInvoices(String email) {
+    public List<InvoiceResponse> getMyInvoices(String email) {
 
         return invoiceRepository.findByBusinessUser_Email(email)
                 .stream()
-                .map(invoice -> com.revpayproject.revpay.dto.InvoiceResponse.builder()
+                .map(invoice -> InvoiceResponse.builder()
                         .id(invoice.getId())
                         .customerName(invoice.getCustomerName())
                         .customerEmail(invoice.getCustomerEmail())
                         .totalAmount(invoice.getTotalAmount())
                         .dueDate(invoice.getDueDate())
-                        .status(invoice.getStatus())
+                        .status(invoice.getStatus().name())
                         .build())
                 .toList();
     }
@@ -192,4 +195,20 @@ public class InvoiceService {
         return "Invoice sent successfully";
     }
 
+    public Page<InvoiceResponse> getMyInvoicesPaginated(
+            String email,
+            Pageable pageable
+    ) {
+        return invoiceRepository
+                .findByBusinessUser_Email(email, pageable)
+                .map(invoice -> InvoiceResponse.builder()
+                        .id(invoice.getId())
+                        .customerName(invoice.getCustomerName())
+                        .customerEmail(invoice.getCustomerEmail())
+                        .totalAmount(invoice.getTotalAmount())
+                        .status(invoice.getStatus().name())
+                        .dueDate(invoice.getDueDate())
+                        .build()
+                );
+    }
 }

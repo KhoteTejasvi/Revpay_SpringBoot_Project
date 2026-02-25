@@ -1,5 +1,6 @@
 package com.revpayproject.revpay.repository;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import com.revpayproject.revpay.entity.Loan;
 import com.revpayproject.revpay.enums.LoanStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,4 +16,9 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
     long countByBusinessUser_EmailAndStatus(
             String email,
             com.revpayproject.revpay.enums.LoanStatus status);
+
+    Page<Loan> findByBusinessUser_Email(
+            String email,
+            Pageable pageable
+    );
 }

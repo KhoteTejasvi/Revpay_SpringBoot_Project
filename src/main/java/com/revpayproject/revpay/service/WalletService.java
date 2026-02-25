@@ -50,7 +50,12 @@ public class WalletService {
         return wallet.getBalance();
     }
 
+    @Transactional
     public String addMoney(String email, AddMoneyRequest request) {
+
+        if (request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Invalid amount");
+        }
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -58,9 +63,25 @@ public class WalletService {
         Wallet wallet = walletRepository.findByUser(user)
                 .orElseThrow(() -> new RuntimeException("Wallet not found"));
 
+        // Update balance
         wallet.setBalance(wallet.getBalance().add(request.getAmount()));
 
-        walletRepository.save(wallet);
+        // Create transaction record
+        Transaction transaction = new Transaction();
+        transaction.setAmount(request.getAmount());
+        transaction.setType("WALLET_TOPUP");   // 🔥 THIS WAS MISSING
+        transaction.setStatus(TransactionStatus.SUCCESS);
+        transaction.setCreatedAt(LocalDateTime.now());
+        transaction.setSender(null);
+        transaction.setReceiver(user);
+
+        transactionRepository.save(transaction);
+
+        notificationService.createNotification(
+                user,
+                "₹" + request.getAmount() + " added to wallet",
+                "TRANSACTION"
+        );
 
         return "Money Added Successfully";
     }
@@ -126,8 +147,8 @@ public class WalletService {
                         tx.getType(),
                         tx.getStatus(),
                         tx.getCreatedAt(),
-                        tx.getSender().getEmail(),
-                        tx.getReceiver().getEmail()
+                        tx.getSender() != null ? tx.getSender().getEmail() : null,
+                        tx.getReceiver() != null ? tx.getReceiver().getEmail() : null
                 ))
                 .toList();
     }

@@ -11,6 +11,8 @@ import com.revpayproject.revpay.repository.TransactionRepository;
 import com.revpayproject.revpay.repository.UserRepository;
 import com.revpayproject.revpay.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import com.revpayproject.revpay.dto.LoanResponse;
 import com.revpayproject.revpay.enums.TransactionStatus;
@@ -59,7 +61,10 @@ public class LoanService {
         loan.setInterestRate(interestRate);
         loan.setTenureMonths(dto.getTenureMonths());
         loan.setEmiAmount(emi);
-        loan.setRemainingAmount(emi.multiply(BigDecimal.valueOf(dto.getTenureMonths())));
+        loan.setRemainingAmount(
+                emi.multiply(BigDecimal.valueOf(dto.getTenureMonths()))
+                        .setScale(2, RoundingMode.HALF_UP)
+        );
         loan.setStatus(LoanStatus.PENDING);
         loan.setAppliedAt(LocalDateTime.now());
         loan.setBusinessUser(user);
@@ -80,24 +85,8 @@ public class LoanService {
         double emi = (P * R * Math.pow(1 + R, N)) /
                 (Math.pow(1 + R, N) - 1);
 
-        return BigDecimal.valueOf(emi);
-    }
-
-    public List<LoanResponse> getMyLoans(String email) {
-
-        return loanRepository.findByBusinessUser_Email(email)
-                .stream()
-                .map(loan -> LoanResponse.builder()
-                        .id(loan.getId())
-                        .loanAmount(loan.getLoanAmount())
-                        .interestRate(loan.getInterestRate())
-                        .tenureMonths(loan.getTenureMonths())
-                        .emiAmount(loan.getEmiAmount())
-                        .remainingAmount(loan.getRemainingAmount())
-                        .status(loan.getStatus())
-                        .appliedAt(loan.getAppliedAt())
-                        .build())
-                .toList();
+        return BigDecimal.valueOf(emi)
+                .setScale(2, RoundingMode.HALF_UP);
     }
 
     @Transactional
@@ -201,5 +190,23 @@ public class LoanService {
         );
 
         return "EMI paid successfully";
+    }
+
+    public Page<LoanResponse> getMyLoansPaginated(
+            String email,
+            Pageable pageable
+    ) {
+        return loanRepository
+                .findByBusinessUser_Email(email, pageable)
+                .map(loan -> LoanResponse.builder()
+                        .id(loan.getId())
+                        .loanAmount(loan.getLoanAmount())
+                        .interestRate(loan.getInterestRate())
+                        .tenureMonths(loan.getTenureMonths())
+                        .emiAmount(loan.getEmiAmount())
+                        .remainingAmount(loan.getRemainingAmount())
+                        .status(loan.getStatus())
+                        .appliedAt(loan.getAppliedAt())
+                        .build());
     }
 }

@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -59,5 +61,12 @@ ORDER BY DATE(t.createdAt)
     List<Object[]> getDailyRevenue(
             Long businessId,
             LocalDateTime start,
-            LocalDateTime end);
+            LocalDateTime end
+    );
+
+    Page<Transaction> findBySender_EmailOrReceiver_Email(
+            String senderEmail,
+            String receiverEmail,
+            Pageable pageable
+    );
 }

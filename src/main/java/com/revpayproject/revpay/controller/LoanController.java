@@ -1,10 +1,13 @@
 package com.revpayproject.revpay.controller;
 
 import com.revpayproject.revpay.dto.ApplyLoanDto;
+import com.revpayproject.revpay.dto.LoanResponse;
 import com.revpayproject.revpay.dto.TransactionPinDto;
 import com.revpayproject.revpay.entity.Loan;
 import com.revpayproject.revpay.service.LoanService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,10 +31,10 @@ public class LoanController {
         return loanService.applyLoan(getLoggedInEmail(), dto);
     }
 
-    @GetMapping("/my")
-    public List<com.revpayproject.revpay.dto.LoanResponse> getMyLoans() {
-        return loanService.getMyLoans(getLoggedInEmail());
-    }
+//    @GetMapping("/my")
+//    public List<com.revpayproject.revpay.dto.LoanResponse> getMyLoans() {
+//        return loanService.getMyLoans(getLoggedInEmail());
+//    }
 
     @PostMapping("/{id}/repay")
     public String repayLoan(@PathVariable Long id,
@@ -42,5 +45,16 @@ public class LoanController {
                 getLoggedInEmail(),
                 dto.getPin()
         );
+    }
+
+    @GetMapping("/my")
+    public Page<LoanResponse> getMyLoans(Pageable pageable) {
+
+        String email = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        return loanService.getMyLoansPaginated(email, pageable);
     }
 }

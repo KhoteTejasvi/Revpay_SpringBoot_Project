@@ -1,5 +1,6 @@
 package com.revpayproject.revpay.repository;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import com.revpayproject.revpay.entity.Invoice;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -12,4 +13,9 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
     long countByBusinessUser_EmailAndStatus(
             String email,
             com.revpayproject.revpay.enums.InvoiceStatus status);
+
+    Page<Invoice> findByBusinessUser_Email(
+            String email,
+            Pageable pageable
+    );
 }

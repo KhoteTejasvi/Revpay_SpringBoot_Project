@@ -1,5 +1,6 @@
 package com.revpayproject.revpay.controller;
 
+import com.revpayproject.revpay.dto.TransactionResponse;
 import com.revpayproject.revpay.entity.Transaction;
 import com.revpayproject.revpay.service.TransactionService;
 import com.revpayproject.revpay.util.CsvExportUtil;
@@ -7,6 +8,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -73,5 +76,17 @@ public class TransactionController {
         }
 
         document.close();
+    }
+
+    @GetMapping("/my")
+    public Page<TransactionResponse> getMyTransactions(Pageable pageable) {
+
+        String email = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        return transactionService
+                .getUserTransactionsPaginated(email, pageable);
     }
 }

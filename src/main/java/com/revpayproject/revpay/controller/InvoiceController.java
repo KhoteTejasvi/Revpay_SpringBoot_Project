@@ -7,6 +7,8 @@ import com.revpayproject.revpay.entity.Invoice;
 import com.revpayproject.revpay.repository.InvoiceRepository;
 import com.revpayproject.revpay.service.InvoiceService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,8 +53,14 @@ public class InvoiceController {
     }
 
     @GetMapping("/my")
-    public List<InvoiceResponse> getMyInvoices() {
-        return invoiceService.getMyInvoices(getLoggedInEmail());
+    public Page<InvoiceResponse> getMyInvoices(Pageable pageable) {
+
+        String email = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        return invoiceService.getMyInvoicesPaginated(email, pageable);
     }
 
     @GetMapping("/all")

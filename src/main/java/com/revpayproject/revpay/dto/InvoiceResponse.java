@@ -1,13 +1,11 @@
 package com.revpayproject.revpay.dto;
 
-import com.revpayproject.revpay.enums.InvoiceStatus;
 import lombok.Builder;
-import lombok.Getter;
-
+import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Getter
+@Data
 @Builder
 public class InvoiceResponse {
 
@@ -15,6 +13,6 @@ public class InvoiceResponse {
     private String customerName;
     private String customerEmail;
     private BigDecimal totalAmount;
+    private String status;
     private LocalDateTime dueDate;
-    private InvoiceStatus status;
 }
