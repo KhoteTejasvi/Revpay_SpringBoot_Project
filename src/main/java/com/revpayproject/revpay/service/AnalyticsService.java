@@ -1,11 +1,14 @@
 package com.revpayproject.revpay.service;
 
 import com.revpayproject.revpay.dto.RevenueResponse;
+import com.revpayproject.revpay.dto.TopCustomerResponse;
 import com.revpayproject.revpay.entity.User;
 import com.revpayproject.revpay.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
+import org.springframework.data.domain.PageRequest;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -46,5 +49,23 @@ public class AnalyticsService {
                         user.getId(), start, now);
 
         return new RevenueResponse(period, revenue);
+    }
+
+    public List<TopCustomerResponse> getTopCustomers() {
+
+        User user = userService.getLoggedInUser();
+
+        List<Object[]> results =
+                transactionRepository.findTopCustomers(
+                        user.getId(),
+                        PageRequest.of(0, 5)   // Top 5 customers
+                );
+
+        return results.stream()
+                .map(obj -> new TopCustomerResponse(
+                        (String) obj[0],
+                        (java.math.BigDecimal) obj[1]
+                ))
+                .collect(Collectors.toList());
     }
 }

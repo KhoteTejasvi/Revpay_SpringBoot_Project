@@ -6,6 +6,7 @@ import com.revpayproject.revpay.enums.TransactionStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -35,5 +36,15 @@ AND t.createdAt BETWEEN :start AND :end
     BigDecimal getRevenueBetweenDates(
             Long userId,
             LocalDateTime start,
-            LocalDateTime end);
+            LocalDateTime end
+    );
+
+    @Query("""
+SELECT t.sender.email, COALESCE(SUM(t.amount),0)
+FROM Transaction t
+WHERE t.receiver.id = :businessId
+GROUP BY t.sender.email
+ORDER BY SUM(t.amount) DESC
+""")
+    List<Object[]> findTopCustomers(Long businessId, Pageable pageable);
 }
