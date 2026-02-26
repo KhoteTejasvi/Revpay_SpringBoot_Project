@@ -9,7 +9,7 @@ import com.revpayproject.revpay.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -24,6 +24,11 @@ public class MoneyRequestService {
     private final NotificationService notificationService;
 
     public String sendRequest(String senderEmail, SendRequestDto dto) {
+
+        if (dto.getAmount() == null ||
+                dto.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Invalid amount");
+        }
 
         User sender = userRepository.findByEmail(senderEmail)
                 .orElseThrow(() -> new RuntimeException("Sender not found"));
@@ -44,6 +49,14 @@ public class MoneyRequestService {
         request.setCreatedAt(LocalDateTime.now());
 
         moneyRequestRepository.save(request);
+
+        // Notify receiver
+        notificationService.createNotification(
+                receiver,
+                "New money request of ₹" + dto.getAmount() +
+                        " from " + sender.getFullName(),
+                "REQUEST"
+        );
 
         return "Request Sent Successfully";
     }
@@ -130,6 +143,12 @@ public class MoneyRequestService {
         request.setStatus(RequestStatus.DECLINED);
         moneyRequestRepository.save(request);
 
+        notificationService.createNotification(
+                request.getSender(),
+                "Your money request of ₹" + request.getAmount() + " was declined",
+                "REQUEST"
+        );
+
         return "Request Declined";
     }
 
@@ -154,12 +173,23 @@ public class MoneyRequestService {
     }
 
     // OUTGOING REQUESTS
-    public List<MoneyRequest> getOutgoingRequests(String email) {
+    public List<MoneyRequestResponse> getOutgoingRequests(String email) {
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return moneyRequestRepository.findBySender(user);
+        return moneyRequestRepository.findBySender(user)
+                .stream()
+                .map(r -> new MoneyRequestResponse(
+                        r.getId(),
+                        r.getAmount(),
+                        r.getNote(),
+                        r.getStatus().name(),
+                        r.getCreatedAt(),
+                        r.getSender().getEmail(),
+                        r.getReceiver().getEmail()
+                ))
+                .toList();
     }
 
     public String cancelRequest(Long requestId, String senderEmail) {
@@ -179,5 +209,24 @@ public class MoneyRequestService {
         moneyRequestRepository.save(request);
 
         return "Request Cancelled Successfully";
+    }
+
+    public List<MoneyRequestResponse> getRequestsByStatus(String email, RequestStatus status) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return moneyRequestRepository.findByReceiverAndStatus(user, status)
+                .stream()
+                .map(r -> new MoneyRequestResponse(
+                        r.getId(),
+                        r.getAmount(),
+                        r.getNote(),
+                        r.getStatus().name(),
+                        r.getCreatedAt(),
+                        r.getSender().getEmail(),
+                        r.getReceiver().getEmail()
+                ))
+                .toList();
     }
 }

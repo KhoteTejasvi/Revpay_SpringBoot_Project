@@ -50,12 +50,17 @@ public class MoneyRequestController {
 
     // Outgoing requests
     @GetMapping("/outgoing")
-    public List<MoneyRequest> getOutgoingRequests() {
+    public List<MoneyRequestResponse> getOutgoingRequests() {
         return moneyRequestService.getOutgoingRequests(getLoggedInEmail());
     }
 
     @PutMapping("/{id}/cancel")
     public String cancelRequest(@PathVariable Long id) {
         return moneyRequestService.cancelRequest(id, getLoggedInEmail());
+    }
+
+    @GetMapping("/status/{status}")
+    public List<MoneyRequestResponse> getByStatus(@PathVariable RequestStatus status) {
+        return moneyRequestService.getRequestsByStatus(getLoggedInEmail(), status);
     }
 }

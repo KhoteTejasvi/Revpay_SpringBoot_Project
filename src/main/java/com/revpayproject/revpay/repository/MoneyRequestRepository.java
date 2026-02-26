@@ -2,6 +2,7 @@ package com.revpayproject.revpay.repository;
 
 import com.revpayproject.revpay.entity.MoneyRequest;
 import com.revpayproject.revpay.entity.User;
+import com.revpayproject.revpay.enums.RequestStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -9,6 +10,6 @@ import java.util.List;
 public interface MoneyRequestRepository extends JpaRepository<MoneyRequest, Long> {
 
     List<MoneyRequest> findByReceiver(User receiver);
-
+    List<MoneyRequest> findByReceiverAndStatus(User receiver, RequestStatus status);
     List<MoneyRequest> findBySender(User sender);
 }
