@@ -16,7 +16,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.core.context.SecurityContextHolder;
 import com.revpayproject.revpay.dto.EmiScheduleResponse;
 import java.math.RoundingMode;
-
+import com.revpayproject.revpay.repository.BusinessProfileRepository;
+import com.revpayproject.revpay.entity.BusinessProfile;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -31,6 +32,7 @@ public class LoanService {
     private final TransactionRepository transactionRepository;
     private final NotificationService notificationService;
     private final EmiScheduleRepository emiScheduleRepository;
+    private final BusinessProfileRepository businessProfileRepository;
 
 
     public String applyLoan(String email, ApplyLoanDto dto) {
@@ -40,6 +42,14 @@ public class LoanService {
 
         if (user.getRole() != Role.BUSINESS) {
             throw new RuntimeException("Only BUSINESS users can apply for loan");
+        }
+
+        BusinessProfile profile = businessProfileRepository
+                .findByUser(user)
+                .orElseThrow(() -> new RuntimeException("Business profile not found"));
+
+        if (!profile.isVerified()) {
+            throw new RuntimeException("Business not verified by admin");
         }
 
         BigDecimal interestRate = BigDecimal.valueOf(10);

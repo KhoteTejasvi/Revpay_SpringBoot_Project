@@ -1,6 +1,7 @@
 package com.revpayproject.revpay.service;
 
 import com.revpayproject.revpay.dto.AddCardDto;
+import com.revpayproject.revpay.dto.EditCardDto;
 import com.revpayproject.revpay.dto.PaymentMethodResponse;
 import com.revpayproject.revpay.entity.PaymentMethod;
 import com.revpayproject.revpay.entity.User;
@@ -80,7 +81,23 @@ public class PaymentMethodService {
             throw new RuntimeException("Unauthorized");
         }
 
+        User user = card.getUser();
+        boolean wasDefault = card.isDefault();
+
+        // Delete the card
         paymentMethodRepository.delete(card);
+
+        // 🔥 If deleted card was default → assign new default
+        if (wasDefault) {
+
+            List<PaymentMethod> remainingCards =
+                    paymentMethodRepository.findByUser(user);
+
+            if (!remainingCards.isEmpty()) {
+                remainingCards.get(0).setDefault(true);
+                paymentMethodRepository.save(remainingCards.get(0));
+            }
+        }
 
         return "Card Deleted";
     }
@@ -106,4 +123,48 @@ public class PaymentMethodService {
 
         return (sum % 10 == 0);
     }
+
+    public String editCard(Long cardId, String email, EditCardDto dto) {
+
+        PaymentMethod card = paymentMethodRepository.findById(cardId)
+                .orElseThrow(() -> new RuntimeException("Card not found"));
+
+        if (!card.getUser().getEmail().equals(email)) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        card.setExpiry(dto.getExpiry());
+        card.setBillingAddress(dto.getBillingAddress());
+
+        paymentMethodRepository.save(card);
+
+        return "Card updated successfully";
+    }
+
+    public String setDefaultCard(Long cardId, String email) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<PaymentMethod> userCards =
+                paymentMethodRepository.findByUser(user);
+
+        PaymentMethod selectedCard = userCards.stream()
+                .filter(card -> card.getId().equals(cardId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Card not found or unauthorized"));
+
+        // Remove default from all cards
+        for (PaymentMethod card : userCards) {
+            card.setDefault(false);
+        }
+
+        // Set selected as default
+        selectedCard.setDefault(true);
+
+        paymentMethodRepository.saveAll(userCards);
+
+        return "Default card updated successfully";
+    }
+
 }

@@ -24,7 +24,6 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
             Pageable pageable
     );
 
-    // 🔥 ADD THIS FOR OVERDUE SCHEDULER
     List<Invoice> findByStatusAndDueDateBefore(
             InvoiceStatus status,
             LocalDateTime dateTime

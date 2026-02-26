@@ -10,7 +10,7 @@ import com.revpayproject.revpay.entity.Wallet;
 import com.revpayproject.revpay.repository.SecurityQuestionRepository;
 import com.revpayproject.revpay.repository.UserRepository;
 import com.revpayproject.revpay.repository.WalletRepository;
-import com.revpayproject.revpay.security.AccountLockService;
+import com.revpayproject.revpay.service.AccountLockService;
 import com.revpayproject.revpay.security.JwtService;
 import com.revpayproject.revpay.service.SecurityQuestionService;
 import lombok.RequiredArgsConstructor;

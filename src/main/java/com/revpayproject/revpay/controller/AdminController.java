@@ -3,6 +3,7 @@ package com.revpayproject.revpay.controller;
 import com.revpayproject.revpay.dto.DashboardResponse;
 import com.revpayproject.revpay.dto.PagedResponse;
 import com.revpayproject.revpay.dto.UserResponse;
+import com.revpayproject.revpay.entity.BusinessProfile;
 import com.revpayproject.revpay.entity.Transaction;
 import com.revpayproject.revpay.entity.User;
 import com.revpayproject.revpay.enums.TransactionStatus;
@@ -92,5 +93,23 @@ public class AdminController {
     @PreAuthorize("hasRole('ADMIN')")
     public String approveLoan(@PathVariable Long id) {
         return loanService.approveLoan(id);
+    }
+
+    @GetMapping("/business/pending")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<BusinessProfile> getPendingBusinesses() {
+        return adminService.getPendingBusinesses();
+    }
+
+    @PutMapping("/business/{id}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String approveBusiness(@PathVariable Long id) {
+        return adminService.approveBusiness(id);
+    }
+
+    @PutMapping("/business/{id}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String rejectBusiness(@PathVariable Long id) {
+        return adminService.rejectBusiness(id);
     }
 }

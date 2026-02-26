@@ -1,4 +1,4 @@
-package com.revpayproject.revpay.security;
+package com.revpayproject.revpay.service;
 
 import com.revpayproject.revpay.entity.User;
 import com.revpayproject.revpay.repository.UserRepository;

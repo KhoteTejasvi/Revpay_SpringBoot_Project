@@ -29,7 +29,18 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+
+                        // ✅ Swagger Whitelist
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
+
+                        // ✅ Auth APIs
                         .requestMatchers("/api/auth/**").permitAll()
+
+                        // ✅ Admin
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                         // PERSONAL users can pay invoices

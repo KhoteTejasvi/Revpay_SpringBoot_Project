@@ -94,8 +94,11 @@ public class WalletService {
 
         userService.validatePin(sender, request.getTransactionPin());
 
-        User receiver = userRepository.findByEmail(request.getReceiverEmail())
-                .orElseThrow(() -> new RuntimeException("Receiver not found"));
+        User receiver = findReceiverByIdentifier(request.getIdentifier());
+
+        if (sender.getId().equals(receiver.getId())) {
+            throw new RuntimeException("You cannot transfer money to yourself");
+        }
 
         Wallet senderWallet = walletRepository.findByUser(sender)
                 .orElseThrow(() -> new RuntimeException("Sender wallet not found"));
@@ -308,13 +311,44 @@ public class WalletService {
                     tx.getType(),
                     tx.getStatus().name(),
                     tx.getAmount().toString(),
-                    tx.getSender().getEmail(),
-                    tx.getReceiver().getEmail(),
+                    tx.getSender() != null ? tx.getSender().getEmail() : "SYSTEM",
+                    tx.getReceiver() != null ? tx.getReceiver().getEmail() : "SYSTEM",
                     tx.getCreatedAt().toString()
             };
             csvWriter.writeNext(data);
         }
 
         csvWriter.close();
+    }
+
+    private User findReceiverByIdentifier(String identifier) {
+
+        // 1️⃣ Email
+        if (identifier.contains("@")) {
+            return userRepository.findByEmail(identifier)
+                    .orElseThrow(() -> new RuntimeException("User not found with email"));
+        }
+
+        // 2️⃣ User ID (pure numeric AND exists in DB)
+        if (identifier.matches("\\d+")) {
+
+            Long userId = Long.parseLong(identifier);
+
+            // Try userId first
+            var userById = userRepository.findById(userId);
+            if (userById.isPresent()) {
+                return userById.get();
+            }
+
+            // If not userId, maybe phone number
+            if (identifier.length() == 10) {
+                return userRepository.findByPhoneNumber(identifier)
+                        .orElseThrow(() -> new RuntimeException("User not found with phone"));
+            }
+        }
+
+        // 3️⃣ Username / Full Name
+        return userRepository.findByFullName(identifier)
+                .orElseThrow(() -> new RuntimeException("User not found with name"));
     }
 }

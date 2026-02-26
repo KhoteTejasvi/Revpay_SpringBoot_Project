@@ -6,10 +6,7 @@ import com.revpayproject.revpay.entity.*;
 import com.revpayproject.revpay.enums.InvoiceStatus;
 import com.revpayproject.revpay.enums.Role;
 import com.revpayproject.revpay.enums.TransactionStatus;
-import com.revpayproject.revpay.repository.InvoiceRepository;
-import com.revpayproject.revpay.repository.TransactionRepository;
-import com.revpayproject.revpay.repository.UserRepository;
-import com.revpayproject.revpay.repository.WalletRepository;
+import com.revpayproject.revpay.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,6 +29,7 @@ public class InvoiceService {
     private final NotificationService notificationService;
     private final UserService userService;
     private final EmailService emailService;
+    private final BusinessProfileRepository businessProfileRepository;
 
     public String createInvoice(String email, CreateInvoiceDto dto) {
 
@@ -40,6 +38,14 @@ public class InvoiceService {
 
         if (businessUser.getRole() != Role.BUSINESS) {
             throw new RuntimeException("Only BUSINESS users can create invoices");
+        }
+
+        BusinessProfile profile = businessProfileRepository
+                .findByUser(businessUser)
+                .orElseThrow(() -> new RuntimeException("Business profile not found"));
+
+        if (!profile.isVerified()) {
+            throw new RuntimeException("Business not verified by admin");
         }
 
         if (dto.getItems() == null || dto.getItems().isEmpty()) {

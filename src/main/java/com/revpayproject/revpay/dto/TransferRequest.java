@@ -10,9 +10,8 @@ import java.math.BigDecimal;
 @Setter
 public class TransferRequest {
 
-    @Email(message = "Invalid receiver email")
-    @NotBlank(message = "Receiver email required")
-    private String receiverEmail;
+    @NotBlank(message = "Receiver identifier required")
+    private String identifier;   // email / phone / id / username
 
     @NotNull(message = "Amount required")
     @Positive(message = "Amount must be positive")
