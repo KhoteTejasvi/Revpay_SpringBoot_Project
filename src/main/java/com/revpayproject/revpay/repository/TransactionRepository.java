@@ -97,4 +97,36 @@ AND (t.sender.email = :email OR t.receiver.email = :email)
             String email,
             Pageable pageable
     );
+
+    @Query("""
+   SELECT DATE(t.createdAt) as date, SUM(t.amount)
+   FROM Transaction t
+   WHERE t.receiver.id = :businessId
+   AND t.status = 'SUCCESS'
+   GROUP BY DATE(t.createdAt)
+   ORDER BY DATE(t.createdAt)
+""")
+    List<Object[]> getDailyRevenue(Long businessId);
+
+
+    @Query("""
+   SELECT FUNCTION('YEARWEEK', t.createdAt), SUM(t.amount)
+   FROM Transaction t
+   WHERE t.receiver.id = :businessId
+   AND t.status = 'SUCCESS'
+   GROUP BY FUNCTION('YEARWEEK', t.createdAt)
+   ORDER BY FUNCTION('YEARWEEK', t.createdAt)
+""")
+    List<Object[]> getWeeklyRevenue(Long businessId);
+
+
+    @Query("""
+   SELECT FUNCTION('DATE_FORMAT', t.createdAt, '%Y-%m'), SUM(t.amount)
+   FROM Transaction t
+   WHERE t.receiver.id = :businessId
+   AND t.status = 'SUCCESS'
+   GROUP BY FUNCTION('DATE_FORMAT', t.createdAt, '%Y-%m')
+   ORDER BY FUNCTION('DATE_FORMAT', t.createdAt, '%Y-%m')
+""")
+    List<Object[]> getMonthlyRevenue(Long businessId);
 }

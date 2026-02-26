@@ -50,4 +50,6 @@ public class User {
     private boolean accountLocked = false;
 
     private LocalDateTime lockTime;
+
+    private String profileImage;
 }

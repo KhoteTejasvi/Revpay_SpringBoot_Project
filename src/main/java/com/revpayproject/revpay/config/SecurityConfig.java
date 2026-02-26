@@ -5,6 +5,7 @@ import com.revpayproject.revpay.security.RateLimitFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -30,16 +31,34 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/transactions/export/**")
-                        .hasAnyAuthority("ROLE_USER", "ROLE_BUSINESS")
+
+                        // PERSONAL users can pay invoices
+                        .requestMatchers(HttpMethod.POST, "/api/invoice/*/pay")
+                        .hasRole("USER")
+
+                        // BUSINESS users manage invoices
+                        .requestMatchers(HttpMethod.POST, "/api/invoice/create")
+                        .hasRole("BUSINESS")
+
+                        .requestMatchers(HttpMethod.POST, "/api/invoice/*/send")
+                        .hasRole("BUSINESS")
+
+                        .requestMatchers(HttpMethod.POST, "/api/invoice/*/cancel")
+                        .hasRole("BUSINESS")
+
+                        .requestMatchers(HttpMethod.POST, "/api/invoice/*/mark-paid-manual")
+                        .hasRole("BUSINESS")
+
+                        // Allow both roles to view invoices
+                        .requestMatchers("/api/invoice/**")
+                        .hasAnyRole("BUSINESS", "PERSONAL")
+
                         .anyRequest().authenticated()
                 )
 
-                // 🔥 ADD RATE LIMIT FILTER FIRST
                 .addFilterBefore(rateLimitFilter,
                         UsernamePasswordAuthenticationFilter.class)
 
-                // 🔥 THEN JWT FILTER
                 .addFilterBefore(jwtAuthFilter,
                         UsernamePasswordAuthenticationFilter.class);
 

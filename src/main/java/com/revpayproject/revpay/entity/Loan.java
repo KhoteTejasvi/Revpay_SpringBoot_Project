@@ -33,4 +33,10 @@ public class Loan {
     @ManyToOne
     @JoinColumn(name = "business_user_id")
     private User businessUser;
+
+    private String rejectionReason;
+
+    private String documentName;
+
+    private String documentPath;
 }

@@ -1,15 +1,10 @@
 package com.revpayproject.revpay.service;
 
 import com.revpayproject.revpay.dto.ApplyLoanDto;
-import com.revpayproject.revpay.entity.Loan;
-import com.revpayproject.revpay.entity.Transaction;
-import com.revpayproject.revpay.entity.User;
+import com.revpayproject.revpay.entity.*;
 import com.revpayproject.revpay.enums.LoanStatus;
 import com.revpayproject.revpay.enums.Role;
-import com.revpayproject.revpay.repository.LoanRepository;
-import com.revpayproject.revpay.repository.TransactionRepository;
-import com.revpayproject.revpay.repository.UserRepository;
-import com.revpayproject.revpay.repository.WalletRepository;
+import com.revpayproject.revpay.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,12 +12,13 @@ import org.springframework.stereotype.Service;
 import com.revpayproject.revpay.dto.LoanResponse;
 import com.revpayproject.revpay.enums.TransactionStatus;
 import jakarta.transaction.Transactional;
-import com.revpayproject.revpay.entity.Wallet;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.revpayproject.revpay.dto.EmiScheduleResponse;
 import java.math.RoundingMode;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +30,8 @@ public class LoanService {
     private final UserService userService;
     private final TransactionRepository transactionRepository;
     private final NotificationService notificationService;
+    private final EmiScheduleRepository emiScheduleRepository;
+
 
     public String applyLoan(String email, ApplyLoanDto dto) {
 
@@ -111,6 +109,7 @@ public class LoanService {
 
         loan.setStatus(LoanStatus.ACTIVE);
         loan.setApprovedAt(LocalDateTime.now());
+        generateEmiSchedule(loan);
 
         // Create transaction record
         Transaction transaction = new Transaction();
@@ -208,5 +207,101 @@ public class LoanService {
                         .status(loan.getStatus())
                         .appliedAt(loan.getAppliedAt())
                         .build());
+    }
+
+    public void rejectLoan(Long loanId, String reason) {
+
+        Loan loan = loanRepository.findById(loanId)
+                .orElseThrow(() -> new RuntimeException("Loan not found"));
+
+        if (loan.getStatus() != LoanStatus.PENDING) {
+            throw new RuntimeException("Only pending loans can be rejected");
+        }
+
+        loan.setStatus(LoanStatus.REJECTED);
+        loan.setRejectionReason(reason);
+
+        loanRepository.save(loan);
+    }
+
+    public void uploadDocument(Long loanId, MultipartFile file) {
+
+        Loan loan = loanRepository.findById(loanId)
+                .orElseThrow(() -> new RuntimeException("Loan not found"));
+
+        loan.setDocumentName(file.getOriginalFilename());
+        loan.setDocumentPath("simulated/path/" + file.getOriginalFilename());
+
+        loanRepository.save(loan);
+    }
+    public Page<EmiScheduleResponse> getSchedule(Long loanId, Pageable pageable) {
+
+        String email = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        Loan loan = loanRepository.findById(loanId)
+                .orElseThrow(() -> new RuntimeException("Loan not found"));
+
+        if (!loan.getBusinessUser().getEmail().equals(email)) {
+            throw new RuntimeException("Unauthorized access");
+        }
+
+        return emiScheduleRepository
+                .findByLoan_IdOrderByEmiNumberAsc(loanId, pageable)
+                .map(emi -> EmiScheduleResponse.builder()
+                        .emiNumber(emi.getEmiNumber())
+                        .dueDate(emi.getDueDate())
+                        .principalComponent(emi.getPrincipalComponent())
+                        .interestComponent(emi.getInterestComponent())
+                        .totalEmi(emi.getTotalEmi())
+                        .remainingBalance(emi.getRemainingBalance())
+                        .paid(emi.isPaid())
+                        .build());
+    }
+
+    private void generateEmiSchedule(Loan loan) {
+
+        BigDecimal principal = loan.getLoanAmount();
+        BigDecimal annualRate = loan.getInterestRate();
+
+        BigDecimal monthlyRate = annualRate
+                .divide(BigDecimal.valueOf(12), 10, RoundingMode.HALF_UP)
+                .divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP);
+
+        BigDecimal remainingPrincipal = principal;
+        int tenure = loan.getTenureMonths();
+
+        for (int i = 1; i <= tenure; i++) {
+
+            BigDecimal interestComponent = remainingPrincipal
+                    .multiply(monthlyRate)
+                    .setScale(2, RoundingMode.HALF_UP);
+
+            BigDecimal principalComponent = loan.getEmiAmount()
+                    .subtract(interestComponent)
+                    .setScale(2, RoundingMode.HALF_UP);
+
+            remainingPrincipal = remainingPrincipal
+                    .subtract(principalComponent)
+                    .setScale(2, RoundingMode.HALF_UP);
+
+            if (remainingPrincipal.compareTo(BigDecimal.ZERO) < 0) {
+                remainingPrincipal = BigDecimal.ZERO;
+            }
+
+            EmiSchedule emi = new EmiSchedule();
+            emi.setLoan(loan);
+            emi.setEmiNumber(i);
+            emi.setPrincipalComponent(principalComponent);
+            emi.setInterestComponent(interestComponent);
+            emi.setTotalEmi(loan.getEmiAmount());
+            emi.setRemainingBalance(remainingPrincipal);
+            emi.setDueDate(LocalDateTime.now().plusMonths(i).toLocalDate());
+            emi.setPaid(false);
+
+            emiScheduleRepository.save(emi);
+        }
     }
 }

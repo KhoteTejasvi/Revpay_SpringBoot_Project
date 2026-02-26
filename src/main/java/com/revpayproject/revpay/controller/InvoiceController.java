@@ -67,4 +67,15 @@ public class InvoiceController {
     public List<Invoice> getAllInvoices() {
         return invoiceRepository.findAll();
     }
+
+    @PostMapping("/{id}/cancel")
+    public String cancelInvoice(@PathVariable Long id) {
+        return invoiceService.cancelInvoice(id, getLoggedInEmail());
+    }
+
+    @PostMapping("/{id}/mark-paid-manual")
+    public String markPaidManually(@PathVariable Long id) {
+        return invoiceService.markInvoiceAsPaidManually(id, getLoggedInEmail());
+    }
+
 }

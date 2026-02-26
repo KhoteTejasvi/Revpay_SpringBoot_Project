@@ -31,6 +31,7 @@ public class InvoiceService {
     private final TransactionRepository transactionRepository;
     private final NotificationService notificationService;
     private final UserService userService;
+    private final EmailService emailService;
 
     public String createInvoice(String email, CreateInvoiceDto dto) {
 
@@ -113,20 +114,20 @@ public class InvoiceService {
             throw new RuntimeException("Insufficient balance to pay invoice");
         }
 
-        // Deduct from payer
+        // 1️⃣ Deduct from payer
         payerWallet.setBalance(
                 payerWallet.getBalance().subtract(invoice.getTotalAmount())
         );
 
-        // Credit business
+        // 2️⃣ Credit business
         businessWallet.setBalance(
                 businessWallet.getBalance().add(invoice.getTotalAmount())
         );
 
-        // Update invoice status
+        // 3️⃣ Update invoice status
         invoice.setStatus(InvoiceStatus.PAID);
 
-        // Create transaction record
+        // 4️⃣ Create transaction record
         Transaction transaction = new Transaction();
         transaction.setAmount(invoice.getTotalAmount());
         transaction.setType("INVOICE_PAYMENT");
@@ -137,7 +138,7 @@ public class InvoiceService {
 
         transactionRepository.save(transaction);
 
-        // Notifications
+        // 5️⃣ Notifications (In-App)
         notificationService.createNotification(
                 invoice.getBusinessUser(),
                 "Invoice paid: ₹" + invoice.getTotalAmount(),
@@ -151,6 +152,20 @@ public class InvoiceService {
         );
 
         notificationService.checkLowBalance(payer, payerWallet);
+
+        // 6️⃣ 📧 Email Notification (Wrapped in Try-Catch)
+        try {
+            emailService.sendInvoiceEmail(
+                    payer.getEmail(),
+                    "Invoice Payment Successful",
+                    "Hello " + payer.getFullName() + ",\n\n" +
+                            "You successfully paid invoice ₹" +
+                            invoice.getTotalAmount() +
+                            ".\n\nThank you for using RevPay."
+            );
+        } catch (Exception e) {
+            System.out.println("Payment email failed but transaction completed.");
+        }
 
         return "Invoice paid successfully";
     }
@@ -184,13 +199,28 @@ public class InvoiceService {
             throw new RuntimeException("Only DRAFT invoices can be sent");
         }
 
+        // 1️⃣ Change status
         invoice.setStatus(InvoiceStatus.SENT);
 
+        // 2️⃣ In-app notification
         notificationService.createNotification(
                 invoice.getBusinessUser(),
                 "Invoice sent to " + invoice.getCustomerEmail(),
                 "INVOICE"
         );
+
+        // 3️⃣ Email (WRAPPED IN TRY-CATCH)
+//        try {
+//            emailService.sendInvoiceEmail(
+//                    invoice.getCustomerEmail(),
+//                    "New Invoice from RevPay",
+//                    "Hello " + invoice.getCustomerName() +
+//                            ", You have received invoice of ₹" +
+//                            invoice.getTotalAmount()
+//            );
+//        } catch (Exception e) {
+//            System.out.println("Email sending failed but invoice marked SENT.");
+//        }
 
         return "Invoice sent successfully";
     }
@@ -210,5 +240,63 @@ public class InvoiceService {
                         .dueDate(invoice.getDueDate())
                         .build()
                 );
+    }
+
+    @Transactional
+    public String cancelInvoice(Long invoiceId, String email) {
+
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new RuntimeException("Invoice not found"));
+
+        if (!invoice.getBusinessUser().getEmail().equals(email)) {
+            throw new RuntimeException("Unauthorized access");
+        }
+
+        if (invoice.getStatus() == InvoiceStatus.PAID) {
+            throw new RuntimeException("Paid invoice cannot be cancelled");
+        }
+
+        if (invoice.getStatus() == InvoiceStatus.CANCELLED) {
+            throw new RuntimeException("Invoice already cancelled");
+        }
+
+        invoice.setStatus(InvoiceStatus.CANCELLED);
+
+        notificationService.createNotification(
+                invoice.getBusinessUser(),
+                "Invoice cancelled: ID " + invoice.getId(),
+                "INVOICE"
+        );
+
+        return "Invoice cancelled successfully";
+    }
+
+    @Transactional
+    public String markInvoiceAsPaidManually(Long invoiceId, String email) {
+
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new RuntimeException("Invoice not found"));
+
+        if (!invoice.getBusinessUser().getEmail().equals(email)) {
+            throw new RuntimeException("Unauthorized access");
+        }
+
+        if (invoice.getStatus() == InvoiceStatus.PAID) {
+            throw new RuntimeException("Invoice already paid");
+        }
+
+        if (invoice.getStatus() == InvoiceStatus.CANCELLED) {
+            throw new RuntimeException("Cancelled invoice cannot be paid");
+        }
+
+        invoice.setStatus(InvoiceStatus.PAID);
+
+        notificationService.createNotification(
+                invoice.getBusinessUser(),
+                "Invoice manually marked as PAID: ID " + invoice.getId(),
+                "INVOICE"
+        );
+
+        return "Invoice marked as paid manually";
     }
 }

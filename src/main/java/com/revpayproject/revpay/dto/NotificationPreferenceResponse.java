@@ -1,11 +1,11 @@
 package com.revpayproject.revpay.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
 
 @Getter
-@Setter
-public class NotificationPreferenceDto {
+@AllArgsConstructor
+public class NotificationPreferenceResponse {
 
     private boolean transactionNotifications;
     private boolean emailNotifications;

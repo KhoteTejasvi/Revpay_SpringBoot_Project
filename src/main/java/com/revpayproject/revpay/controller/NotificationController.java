@@ -1,15 +1,15 @@
 package com.revpayproject.revpay.controller;
 
+import com.revpayproject.revpay.dto.NotificationPreferenceDto;
+import com.revpayproject.revpay.dto.NotificationPreferenceResponse;
 import com.revpayproject.revpay.dto.NotificationResponse;
-import com.revpayproject.revpay.entity.Notification;
 import com.revpayproject.revpay.entity.User;
 import com.revpayproject.revpay.repository.UserRepository;
 import com.revpayproject.revpay.service.NotificationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -28,8 +28,11 @@ public class NotificationController {
     }
 
     @GetMapping
-    public List<NotificationResponse> getNotifications() {
-        return notificationService.getUserNotifications(getUser());
+    public Page<NotificationResponse> getNotifications(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        return notificationService.getUserNotifications(getUser(), page, size);
     }
 
     @PutMapping("/{id}/read")
@@ -38,5 +41,12 @@ public class NotificationController {
         notificationService.markAsRead(id, getUser());
 
         return "Notification marked as read";
+    }
+
+    @PutMapping("/preferences")
+    public NotificationPreferenceResponse updatePreferences(
+            @RequestBody NotificationPreferenceDto dto) {
+
+        return notificationService.updatePreferences(getUser(), dto);
     }
 }

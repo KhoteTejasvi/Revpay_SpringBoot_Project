@@ -12,6 +12,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import com.revpayproject.revpay.analytics.dto.ChartPointDTO;
+import java.time.YearMonth;
+import java.time.format.TextStyle;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -87,5 +91,72 @@ public class AnalyticsService {
                         (java.math.BigDecimal) obj[1]
                 ))
                 .collect(Collectors.toList());
+    }
+
+
+
+    public List<ChartPointDTO> getDailyRevenueChart() {
+
+        User user = userService.getLoggedInUser();
+
+        List<Object[]> results =
+                transactionRepository.getDailyRevenue(user.getId());
+
+        return results.stream()
+                .map(r -> new ChartPointDTO(
+                        r[0].toString(),
+                        ((Number) r[1]).doubleValue()
+                ))
+                .toList();
+    }
+
+    public List<ChartPointDTO> getWeeklyRevenueChart() {
+
+        User user = userService.getLoggedInUser();
+
+        List<Object[]> results =
+                transactionRepository.getWeeklyRevenue(user.getId());
+
+        return results.stream()
+                .map(r -> {
+                    String yearWeek = r[0].toString();
+
+                    String year = yearWeek.substring(0, 4);
+                    String week = yearWeek.substring(4);
+
+                    String label = "Week " + week + " (" + year + ")";
+
+                    return new ChartPointDTO(
+                            label,
+                            ((Number) r[1]).doubleValue()
+                    );
+                })
+                .toList();
+    }
+
+    public List<ChartPointDTO> getMonthlyRevenueChart() {
+
+        User user = userService.getLoggedInUser();
+
+        List<Object[]> results =
+                transactionRepository.getMonthlyRevenue(user.getId());
+
+        return results.stream()
+                .map(r -> {
+
+                    String yearMonth = r[0].toString(); // Example: 2026-02
+
+                    YearMonth ym = YearMonth.parse(yearMonth);
+
+                    String label = ym.getMonth()
+                            .getDisplayName(TextStyle.SHORT, Locale.ENGLISH)
+                            + " " + ym.getYear();
+
+                    return new ChartPointDTO(
+                            label,
+                            ((Number) r[1]).doubleValue()
+                    );
+                })
+                .toList();
     }
 }
