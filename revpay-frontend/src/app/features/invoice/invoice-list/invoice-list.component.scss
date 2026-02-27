@@ -1,0 +1,57 @@
+.container {
+  padding: 30px;
+}
+
+.create-btn {
+  margin: 15px 0;
+  padding: 10px 20px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+th, td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.PENDING {
+  color: orange;
+  font-weight: bold;
+}
+
+.PAID {
+  color: green;
+  font-weight: bold;
+}
+
+.CANCELLED {
+  color: red;
+  font-weight: bold;
+}
+
+.pay-btn {
+  background: green;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  margin-right: 5px;
+  border-radius: 6px;
+}
+
+.cancel-btn {
+  background: red;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+}

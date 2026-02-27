@@ -1,0 +1,23 @@
+<div class="container">
+
+  <h2>Create Invoice</h2>
+
+  <input
+    placeholder="Customer Email"
+    [(ngModel)]="customerEmail">
+
+  <input
+    type="number"
+    placeholder="Amount"
+    [(ngModel)]="amount">
+
+  <textarea
+    placeholder="Description"
+    [(ngModel)]="description">
+  </textarea>
+
+  <button (click)="create()">
+    Create
+  </button>
+
+</div>

@@ -1,0 +1,58 @@
+<div class="container">
+
+  <h2>My Invoices</h2>
+
+  <button routerLink="/create-invoice" class="create-btn">
+    + Create Invoice
+  </button>
+
+  <table *ngIf="invoices.length">
+
+    <thead>
+    <tr>
+      <th>ID</th>
+      <th>Customer</th>
+      <th>Amount</th>
+      <th>Status</th>
+      <th>Date</th>
+      <th>Actions</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    <tr *ngFor="let i of invoices">
+      <td>{{ i.id }}</td>
+      <td>{{ i.customerEmail }}</td>
+      <td>₹ {{ i.totalAmount }}</td>
+      <td>
+          <span [ngClass]="i.status">
+            {{ i.status }}
+          </span>
+      </td>
+      <td>{{ i.createdAt | date:'short' }}</td>
+
+      <td>
+
+        <button
+          *ngIf="i.status === 'PENDING'"
+          (click)="pay(i.id)"
+          class="pay-btn">
+          Pay
+        </button>
+
+        <button
+          *ngIf="i.status === 'PENDING'"
+          (click)="cancel(i.id)"
+          class="cancel-btn">
+          Cancel
+        </button>
+
+      </td>
+    </tr>
+    </tbody>
+
+  </table>
+
+  <p *ngIf="!invoices.length">No invoices found</p>
+
+</div>

@@ -1,0 +1,44 @@
+<div class="send-container">
+
+  <div class="header">
+    <button (click)="goBack()">←</button>
+    <h2>Send Money</h2>
+  </div>
+
+  <div class="card">
+
+    <label>To</label>
+    <input
+      type="text"
+      [(ngModel)]="receiverEmail"
+      placeholder="Enter email"
+    />
+
+    <label>Amount</label>
+    <input
+      type="number"
+      [(ngModel)]="amount"
+      placeholder="₹ Enter amount"
+    />
+
+    <label>Note (optional)</label>
+    <input
+      type="text"
+      [(ngModel)]="note"
+      placeholder="Add a note"
+    />
+
+    <label>Transaction PIN</label>
+    <input
+      type="password"
+      [(ngModel)]="transactionPin"
+      placeholder="Enter 4-digit PIN"
+    />
+
+    <button class="send-btn" (click)="sendMoney()">
+      Send ₹{{ amount || 0 }}
+    </button>
+
+  </div>
+
+</div>

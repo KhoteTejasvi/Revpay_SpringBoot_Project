@@ -16,6 +16,7 @@ import com.revpayproject.revpay.service.SecurityQuestionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import com.revpayproject.revpay.enums.Role;
 import jakarta.validation.Valid;
@@ -27,6 +28,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/auth")
+@CrossOrigin(origins = "http://localhost:4200")
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -37,16 +39,18 @@ public class AuthController {
     private final JwtService jwtService;
     private final AccountLockService accountLockService;
     private final SecurityQuestionService securityQuestionService;
-
     @PostMapping("/register")
-    public String register(@Valid @RequestBody RegisterRequest request) {
+    @Transactional
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
 
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            return "Email already exists";
+            return ResponseEntity.badRequest()
+                    .body("Email already exists");
         }
 
         if (userRepository.findByPhoneNumber(request.getPhoneNumber()).isPresent()) {
-            return "Phone number already exists";
+            return ResponseEntity.badRequest()
+                    .body(java.util.Map.of("message", "Phone number already exists"));
         }
 
         User user = new User();
@@ -54,9 +58,20 @@ public class AuthController {
         user.setEmail(request.getEmail());
         user.setPhoneNumber(request.getPhoneNumber());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(Role.USER);
 
-        userRepository.save(user);
+// ✅ ROLE FIX
+        if (request.getRole() != null &&
+                request.getRole().equalsIgnoreCase("BUSINESS")) {
+
+            user.setRole(Role.BUSINESS);
+
+        } else {
+
+            user.setRole(Role.USER);
+        }
+
+        // ✅ IMPORTANT — SAVE USER FIRST
+        User savedUser = userRepository.save(user);
 
         // 🔥 SAVE SECURITY QUESTIONS
         if (request.getSecurityQuestions() != null) {
@@ -67,22 +82,25 @@ public class AuthController {
                                 SecurityQuestion sq = new SecurityQuestion();
                                 sq.setQuestion(q.getQuestion());
                                 sq.setAnswer(passwordEncoder.encode(q.getAnswer()));
-                                sq.setUser(user);
+                                sq.setUser(savedUser); // ✅ FIXED
                                 return sq;
                             }).toList();
 
             securityQuestionRepository.saveAll(questions);
         }
 
+        // ✅ CREATE WALLET
         Wallet wallet = new Wallet();
-        wallet.setUser(user);
+        wallet.setUser(savedUser);   // ✅ FIXED
         wallet.setBalance(BigDecimal.ZERO);
 
         walletRepository.save(wallet);
 
-        return "User registered successfully";
-    }
+        return ResponseEntity.ok(
+                java.util.Map.of("message", "User registered successfully")
+        );
 
+    }
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
 

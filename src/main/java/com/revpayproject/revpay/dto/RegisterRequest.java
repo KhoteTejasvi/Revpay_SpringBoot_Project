@@ -23,6 +23,12 @@ public class RegisterRequest {
 
     private String phoneNumber;
 
+    private  String role;
     private List<SecurityQuestionDto> securityQuestions;
 
+    private String businessName;
+    private String businessType;
+    private String taxId;
+    private String businessAddress;
 }
+

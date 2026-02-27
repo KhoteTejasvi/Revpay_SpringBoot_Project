@@ -1,0 +1,70 @@
+<div class="container" *ngIf="!loading">
+
+  <h2>Business Dashboard</h2>
+
+  <div class="cards">
+
+    <div class="card">
+      <h4>Wallet Balance</h4>
+      <p>₹ {{ data?.walletBalance }}</p>
+    </div>
+
+    <div class="card">
+      <h4>Monthly Revenue</h4>
+      <p>₹ {{ data?.monthlyRevenue || 0 }}</p>
+    </div>
+
+    <div class="card">
+      <h4>Total Transactions</h4>
+      <p>{{ data?.totalTransactions }}</p>
+    </div>
+
+    <div class="card">
+      <h4>Pending Invoices</h4>
+      <p>{{ data?.pendingInvoices || 0 }}</p>
+    </div>
+
+  </div>
+
+
+  <div class="actions">
+
+    <button>Create Invoice</button>
+    <button>Request Payment</button>
+    <button>View Analytics</button>
+
+  </div>
+
+
+  <div class="recent">
+
+    <h3>Recent Transactions</h3>
+
+    <table>
+      <thead>
+      <tr>
+        <th>Type</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Date</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      <tr *ngFor="let t of data?.recentTransactions">
+        <td>{{ t.type }}</td>
+        <td>₹ {{ t.amount }}</td>
+        <td>{{ t.status }}</td>
+        <td>{{ t.createdAt | date:'short' }}</td>
+      </tr>
+      </tbody>
+
+    </table>
+
+  </div>
+
+</div>
+
+<div *ngIf="loading">
+  Loading...
+</div>

@@ -2,16 +2,19 @@ package com.revpayproject.revpay.service;
 
 import com.revpayproject.revpay.dto.CreateBusinessDto;
 import com.revpayproject.revpay.dto.NotificationPreferenceDto;
+import com.revpayproject.revpay.dto.RegisterRequest;
 import com.revpayproject.revpay.entity.BusinessProfile;
 import com.revpayproject.revpay.entity.User;
+import com.revpayproject.revpay.entity.Wallet;
 import com.revpayproject.revpay.enums.Role;
 import com.revpayproject.revpay.repository.BusinessProfileRepository;
 import com.revpayproject.revpay.repository.UserRepository;
+import com.revpayproject.revpay.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.context.SecurityContextHolder;
-
+import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -19,6 +22,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final BusinessProfileRepository businessProfileRepository;
     private final PasswordEncoder passwordEncoder;
+    private final WalletRepository walletRepository;
 
     public String updateNotificationPreferences(String email,
                                                 NotificationPreferenceDto dto) {
@@ -33,6 +37,50 @@ public class UserService {
         userRepository.save(user);
 
         return "Notification preferences updated successfully";
+    }
+
+    @Transactional
+    public String register(RegisterRequest request) {
+
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new RuntimeException("Email already registered");
+        }
+
+        User user = new User();
+
+        user.setFullName(request.getFullName());
+        user.setEmail(request.getEmail());
+        user.setPhoneNumber(request.getPhoneNumber());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        // 🔥 Role logic
+        if ("BUSINESS".equalsIgnoreCase(request.getRole())) {
+            user.setRole(Role.BUSINESS);
+
+            BusinessProfile profile = new BusinessProfile();
+            profile.setBusinessName(request.getBusinessName());
+            profile.setBusinessType(request.getBusinessType());
+            profile.setTaxId(request.getTaxId());
+            profile.setBusinessAddress(request.getBusinessAddress());
+            profile.setUser(user);
+
+            businessProfileRepository.save(profile);
+
+        } else {
+            user.setRole(Role.USER);
+        }
+
+        // ✅ SAVE USER FIRST
+        User savedUser = userRepository.save(user);
+
+        // ✅ CREATE WALLET
+        Wallet wallet = new Wallet();
+        wallet.setUser(savedUser);
+        wallet.setBalance(java.math.BigDecimal.ZERO);
+
+        walletRepository.save(wallet);
+
+        return "User registered successfully";
     }
 
     public String upgradeToBusiness(String email,CreateBusinessDto dto) {

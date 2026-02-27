@@ -1,0 +1,58 @@
+<div class="dashboard">
+
+  <h2 class="welcome">Welcome Back 👋</h2>
+
+  <!-- Wallet Card -->
+  <div class="wallet-card">
+    <div>
+      <p>Wallet Balance</p>
+      <h1>₹ {{ balance }}</h1>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions">
+
+    <div class="action" (click)="sendMoney()">
+      <span>💸</span>
+      <p>Send</p>
+    </div>
+
+    <div class="action" (click)="requestMoney()">
+      <span>📩</span>
+      <p>Request</p>
+    </div>
+
+    <div class="action" (click)="addMoney()">
+      <span>➕</span>
+      <p>Add</p>
+    </div>
+
+    <div class="action" (click)="withdraw()">
+      <span>🏧</span>
+      <p>Withdraw</p>
+    </div>
+
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+
+    <div class="stat">
+      <p>Total Sent</p>
+      <h3>{{ summary?.totalSent || 0 }}</h3>
+    </div>
+
+    <div class="stat">
+      <p>Total Received</p>
+      <h3>{{ summary?.totalReceived || 0 }}</h3>
+    </div>
+
+    <div class="stat">
+      <p>Pending Requests</p>
+      <h3>{{ summary?.pendingRequests || 0 }}</h3>
+    </div>
+
+  </div>
+
+</div>

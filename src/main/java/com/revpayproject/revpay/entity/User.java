@@ -7,7 +7,9 @@ import lombok.Setter;
 import com.revpayproject.revpay.enums.Role;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-
+import com.revpayproject.revpay.entity.Wallet;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.CascadeType;
 import java.time.LocalDateTime;
 
 @Getter
@@ -52,4 +54,8 @@ public class User {
     private LocalDateTime lockTime;
 
     private String profileImage;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private Wallet wallet;
 }

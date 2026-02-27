@@ -1,0 +1,29 @@
+<div class="pin-container">
+
+  <h2>Reset Transaction PIN</h2>
+
+  <input
+    type="email"
+    [(ngModel)]="email"
+    placeholder="Enter your email"
+  />
+
+  <input
+    type="password"
+    [(ngModel)]="newPin"
+    placeholder="New PIN"
+  />
+
+  <input
+    type="password"
+    [(ngModel)]="confirmPin"
+    placeholder="Confirm PIN"
+  />
+
+  <button (click)="resetPin()">
+    Reset PIN
+  </button>
+
+  <p class="back" (click)="goBack()">Back to Login</p>
+
+</div>

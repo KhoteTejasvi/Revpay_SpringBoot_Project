@@ -21,6 +21,6 @@ public class Wallet {
     private Long version;
 
     @OneToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", unique = true, nullable = false)
     private User user;
 }
